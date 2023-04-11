@@ -1,13 +1,13 @@
 {
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json",
   "type": "datasource",
-  "name": "SkyWalking Grafana Plugins",
-  "id": "apacheskywalking-skywalkinggrafanaplugins-datasource",
+  "name": "SkyWalking",
+  "id": "skywalking-datasource",
   "metrics": true,
   "info": {
     "description": "",
     "author": {
-      "name": "Apache skywalking"
+      "name": "Apache SkyWalking"
     },
     "keywords": ["datasource"],
     "logos": {
