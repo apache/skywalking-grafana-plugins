@@ -22,5 +22,11 @@
   "dependencies": {
     "grafanaDependency": "^9.3.8",
     "plugins": []
-  }
+  },
+  "routes": [
+    {
+      "path": "graphql",
+      "url": "{{ .JsonData.url }}"
+    }
+  ]
 }
