@@ -2,10 +2,10 @@
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json",
   "type": "datasource",
   "name": "SkyWalking",
-  "id": "skywalking-datasource",
+  "id": "skywalking-skywalking-datasource",
   "metrics": true,
   "info": {
-    "description": "",
+    "description": "Apache SkyWalking",
     "author": {
       "name": "Apache SkyWalking"
     },
