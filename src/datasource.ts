@@ -1,3 +1,4 @@
+import defaults from 'lodash/defaults';
 import {
   DataQueryRequest,
   DataQueryResponse,
@@ -6,9 +7,9 @@ import {
   MutableDataFrame,
   FieldType,
 } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
 
-import { MyQuery, MyDataSourceOptions } from './types';
+import { MyQuery, MyDataSourceOptions, DEFAULT_QUERY } from './types';
 
 // proxy route
 const routePath = '/graphql';
@@ -22,13 +23,26 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
 
   async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
     const { range } = options;
+    console.log(options);
     const from = range!.from.valueOf();
     const to = range!.to.valueOf();
 
     // Return a constant for each query.
-    const data = options.targets.map((target) => {
-      // const query = defaults(target, defaultQuery);
-      // const dataQuery = getTemplateSrv().replace(query.queryText, options.scopedVars);
+    const data = options.targets.map(async (target) => {
+      const query = defaults(target, DEFAULT_QUERY);
+      const dataQuery = getTemplateSrv().replace(query.queryText, options.scopedVars);
+      const  s =  {
+        query: "query queryServices($duration: Duration!,$keyword: String!) {\n    services: getAllServices(duration: $duration, group: $keyword) {\n      key: id\n      label: name\n      group\n    }\n  }",
+        variables: {"duration":{"start":"2023-04-17 1503","end":"2023-04-17 1603","step":"MINUTE"},"keyword":""},
+      };
+      const t = {
+        query: "query queryData($duration: Duration!, $serviceIds: [ID!]!) {\n  topology: getServicesTopology(duration: $duration, serviceIds: $serviceIds) {\n    nodes {\n      id\n      name\n      type\n      isReal\n    }\n    calls {\n      id\n      source\n      detectPoints\n      target\n    }\n  }}",
+        variables: {"duration":{"start":"2023-04-17 1503","end":"2023-04-17 1603","step":"MINUTE"},"serviceIds":["YWdlbnQ6OnNvbmdz.1","YWdlbnQ6OnJlY29tbWVuZGF0aW9u.1","YWdlbnQ6OmFwcA==.1","YWdlbnQ6OmdhdGV3YXk=.1","YWdlbnQ6OmZyb250ZW5k.1"]},
+      };
+      // fetch services from api
+      const services = await this.doRequest(s);
+      // fetch topology data from api
+      const topology = await this.doRequest(t);
       return new MutableDataFrame({
         refId: target.refId,
         fields: [
@@ -49,11 +63,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       headers: {
         'Content-Type': 'application/json'
       },
-      params
-      // params: {
-      //   query: "query queryServices($duration: Duration!,$keyword: String!) {\n    services: getAllServices(duration: $duration, group: $keyword) {\n      key: id\n      label: name\n      group\n    }\n  }",
-      //   variables: {"duration":{"start":"2023-04-17 1503","end":"2023-04-17 1603","step":"MINUTE"},"keyword":""},
-      // }
+      data: params,
     });
     console.log(result);
     return result;
