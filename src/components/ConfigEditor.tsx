@@ -39,11 +39,28 @@ export function ConfigEditor(props: Props) {
     });
   };
 
+  const onURLChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { onOptionsChange, options } = props;
+    const jsonData = {
+      ...options.jsonData,
+      URL: event.target.value,
+    };
+    onOptionsChange({ ...options, jsonData });
+  };
+
   const { jsonData, secureJsonFields } = options;
   const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
 
   return (
     <div className="gf-form-group">
+      <InlineField label="URL" labelWidth={12}>
+        <Input
+          onChange={onURLChange}
+          value={jsonData.URL || ''}
+          placeholder="http://skywalking.example.com"
+          width={40}
+        />
+      </InlineField>
       <InlineField label="Path" labelWidth={12}>
         <Input
           onChange={onPathChange}

@@ -26,7 +26,7 @@
   "routes": [
     {
       "path": "graphql",
-      "url": "{{ .JsonData.url }}"
+      "url": "{{ .JsonData.URL }}"
     }
   ]
 }

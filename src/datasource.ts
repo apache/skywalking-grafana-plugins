@@ -18,17 +18,22 @@ enum TimeType {
   HOUR_TIME = "HOUR",
   DAY_TIME = "DAY",
 }
+
+let BaseUrl = '';
+ 
+export const setUrl = (url: string) => {
+  BaseUrl = url;
+};
 export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
-  url: string;
+  URL: string;
   constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
     super(instanceSettings);
     // proxy url
-    this.url = instanceSettings.url || '';
+    this.URL = instanceSettings.url || '';
   }
 
   async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
     const { range } = options;
-    console.log(options);
     const from = range!.from.valueOf();
     const to = range!.to.valueOf();
     const dates = this.timeFormat([new Date(from), new Date(to)]);
@@ -41,19 +46,20 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     // Return a constant for each query.
     const data = options.targets.map(async (target) => {
       const query = defaults(target, DEFAULT_QUERY);
-      const dataQuery = getTemplateSrv().replace(query.queryText, options.scopedVars);
+      getTemplateSrv().replace(query.queryText, options.scopedVars);
       const  s =  {
         query: "query queryServices($duration: Duration!,$keyword: String!) {\n    services: getAllServices(duration: $duration, group: $keyword) {\n      key: id\n      label: name\n      group\n    }\n  }",
         variables: {duration,"keyword":""},
       };
-      const t = {
-        query: "query queryData($duration: Duration!, $serviceIds: [ID!]!) {\n  topology: getServicesTopology(duration: $duration, serviceIds: $serviceIds) {\n    nodes {\n      id\n      name\n      type\n      isReal\n    }\n    calls {\n      id\n      source\n      detectPoints\n      target\n    }\n  }}",
-        variables: {duration,"serviceIds":["YWdlbnQ6OnNvbmdz.1","YWdlbnQ6OnJlY29tbWVuZGF0aW9u.1","YWdlbnQ6OmFwcA==.1","YWdlbnQ6OmdhdGV3YXk=.1","YWdlbnQ6OmZyb250ZW5k.1"]},
-      };
       // fetch services from api
       const services = await this.doRequest(s);
+      console.log(services);
+      const t = {
+        query: "query queryData($duration: Duration!, $serviceIds: [ID!]!) {\n  topology: getServicesTopology(duration: $duration, serviceIds: $serviceIds) {\n    nodes {\n      id\n      name\n      type\n      isReal\n    }\n    calls {\n      id\n      source\n      detectPoints\n      target\n    }\n  }}",
+        variables: {duration,serviceIds:["YWdlbnQ6OnNvbmdz.1","YWdlbnQ6OnJlY29tbWVuZGF0aW9u.1","YWdlbnQ6OmFwcA==.1","YWdlbnQ6OmdhdGV3YXk=.1","YWdlbnQ6OmZyb250ZW5k.1"]},
+      };
       // fetch topology data from api
-      const topology = await this.doRequest(t);
+     await this.doRequest(t);
       return new MutableDataFrame({
         refId: target.refId,
         fields: [
@@ -68,15 +74,8 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   async doRequest(params?: Record<string, any>) {
     // Do the request on proxy; the server will replace url + routePath with the url
     // defined in plugin.json
-    const result = getBackendSrv().fetch({
-      method: 'POST',
-      url: `${this.url}${routePath}`,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      data: params,
-    });
-    console.log(result);
+    const result = getBackendSrv().post(`${this.URL}${routePath}`, params);
+
     return result;
   }
 
@@ -91,7 +90,8 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       step = TimeType.DAY_TIME;
     }
     return { start: time[0], end: time[1], step };
-  };
+  }
+
   dateFormatStep(date: Date, step: string, monthDayDiff?: boolean): string {
     const year = date.getFullYear();
     const monthTemp = date.getMonth() + 1;
