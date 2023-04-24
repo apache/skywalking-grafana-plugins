@@ -8,6 +8,9 @@ import {
   FieldType,
 } from '@grafana/data';
 import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
+import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 
 import { MyQuery, MyDataSourceOptions, DEFAULT_QUERY } from './types';
 
@@ -19,25 +22,33 @@ enum TimeType {
   DAY_TIME = "DAY",
 }
 
+
+
 export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   URL: string;
   constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
     super(instanceSettings);
     // proxy url
     this.URL = instanceSettings.url || '';
+    dayjs.extend(utc)
+    dayjs.extend(timezone)
   }
 
   async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
     const { range } = options;
     const from = range!.from.valueOf();
     const to = range!.to.valueOf();
-    const dates = this.timeFormat([new Date(from), new Date(to)]);
+    let utc = -(new Date().getTimezoneOffset() / 60) + ":0";
+
+    if (options.timezone !== "browser") {
+      utc = dayjs().tz(options.timezone).utcOffset() / 60 + ":0";
+    }
+    const dates = this.timeFormat([this.getLocalTime(utc, new Date(from)), this.getLocalTime(utc, new Date(to))]);
     const duration = {
       start: this.dateFormatStep(dates.start, dates.step),
       end: this.dateFormatStep(dates.end, dates.step),
       step: dates.step,
     };
-
     // Return a constant for each query.
     const data = options.targets.map(async (target) => {
       const query = defaults(target, DEFAULT_QUERY);
@@ -48,13 +59,13 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       };
       // fetch services from api
       await this.doRequest(s);
-      // console.log(services);
-      // const t = {
-      //   query: "query queryData($duration: Duration!, $serviceIds: [ID!]!) {\n  topology: getServicesTopology(duration: $duration, serviceIds: $serviceIds) {\n    nodes {\n      id\n      name\n      type\n      isReal\n    }\n    calls {\n      id\n      source\n      detectPoints\n      target\n    }\n  }}",
-      //   variables: JSON.stringify({duration,serviceIds:["YWdlbnQ6OnNvbmdz.1","YWdlbnQ6OnJlY29tbWVuZGF0aW9u.1","YWdlbnQ6OmFwcA==.1","YWdlbnQ6OmdhdGV3YXk=.1","YWdlbnQ6OmZyb250ZW5k.1"]}),
-      // };
+      const t = {
+        query: "query queryData($duration: Duration!) {\n  topology: getGlobalTopology(duration: $duration) {\n    nodes {\n      id\n      name\n      type\n      isReal\n    }\n    calls {\n      id\n      source\n      detectPoints\n      target\n    }\n  }}",
+        // variables: {duration: {"start":"2023-04-23 1503","end":"2023-04-23 1603","step":"MINUTE"}},
+        variables: {duration},
+      };
       // fetch topology data from api
-    //  await this.doRequest(t);
+      await this.doRequest(t);
       return new MutableDataFrame({
         refId: target.refId,
         fields: [
@@ -133,6 +144,17 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     }
     return "";
   }
+  getLocalTime(utc: string, time: Date): Date {
+    const utcArr = utc.split(":");
+    const utcHour = isNaN(Number(utcArr[0])) ? 0 : Number(utcArr[0]);
+    const utcMin = isNaN(Number(utcArr[1])) ? 0 : Number(utcArr[1]);
+    const d = new Date(time);
+    const len = d.getTime();
+    const offset = d.getTimezoneOffset() * 60000;
+    const utcTime = len + offset;
+
+    return new Date(utcTime + 3600000 * utcHour + utcMin * 60000);
+  };
 
   async testDatasource() {
     // Implement a health check for your data source.
