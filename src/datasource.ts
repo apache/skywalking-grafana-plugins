@@ -38,10 +38,10 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     const { range } = options;
     const from = range!.from.valueOf();
     const to = range!.to.valueOf();
-    let utc = -(new Date().getTimezoneOffset() / 60) + ":0";
+    let utc = -(new Date().getTimezoneOffset() / 60);
 
     if (options.timezone !== "browser") {
-      utc = dayjs().tz(options.timezone).utcOffset() / 60 + ":0";
+      utc = dayjs().tz(options.timezone).utcOffset() / 60;
     }
     const dates = this.timeFormat([this.getLocalTime(utc, new Date(from)), this.getLocalTime(utc, new Date(to))]);
     const duration = {
@@ -55,13 +55,12 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       getTemplateSrv().replace(query.queryText, options.scopedVars);
       const  s =  {
         query: "query queryServices($duration: Duration!,$keyword: String!) {\n    services: getAllServices(duration: $duration, group: $keyword) {\n      key: id\n      label: name\n      group\n    }\n  }",
-        variables: {duration, keyword:""},
+        variables: {duration},
       };
       // fetch services from api
       await this.doRequest(s);
       const t = {
         query: "query queryData($duration: Duration!) {\n  topology: getGlobalTopology(duration: $duration) {\n    nodes {\n      id\n      name\n      type\n      isReal\n    }\n    calls {\n      id\n      source\n      detectPoints\n      target\n    }\n  }}",
-        // variables: {duration: {"start":"2023-04-23 1503","end":"2023-04-23 1603","step":"MINUTE"}},
         variables: {duration},
       };
       // fetch topology data from api
@@ -144,16 +143,13 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     }
     return "";
   }
-  getLocalTime(utc: string, time: Date): Date {
-    const utcArr = utc.split(":");
-    const utcHour = isNaN(Number(utcArr[0])) ? 0 : Number(utcArr[0]);
-    const utcMin = isNaN(Number(utcArr[1])) ? 0 : Number(utcArr[1]);
+  getLocalTime(utc: number, time: Date): Date {
     const d = new Date(time);
     const len = d.getTime();
     const offset = d.getTimezoneOffset() * 60000;
     const utcTime = len + offset;
 
-    return new Date(utcTime + 3600000 * utcHour + utcMin * 60000);
+    return new Date(utcTime + 3600000 * utc);
   };
 
   async testDatasource() {
