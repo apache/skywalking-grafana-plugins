@@ -19,11 +19,6 @@ enum TimeType {
   DAY_TIME = "DAY",
 }
 
-let BaseUrl = '';
- 
-export const setUrl = (url: string) => {
-  BaseUrl = url;
-};
 export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   URL: string;
   constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
@@ -49,17 +44,17 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       getTemplateSrv().replace(query.queryText, options.scopedVars);
       const  s =  {
         query: "query queryServices($duration: Duration!,$keyword: String!) {\n    services: getAllServices(duration: $duration, group: $keyword) {\n      key: id\n      label: name\n      group\n    }\n  }",
-        variables: {duration,"keyword":""},
+        variables: {duration, keyword:""},
       };
       // fetch services from api
-      const services = await this.doRequest(s);
-      console.log(services);
-      const t = {
-        query: "query queryData($duration: Duration!, $serviceIds: [ID!]!) {\n  topology: getServicesTopology(duration: $duration, serviceIds: $serviceIds) {\n    nodes {\n      id\n      name\n      type\n      isReal\n    }\n    calls {\n      id\n      source\n      detectPoints\n      target\n    }\n  }}",
-        variables: {duration,serviceIds:["YWdlbnQ6OnNvbmdz.1","YWdlbnQ6OnJlY29tbWVuZGF0aW9u.1","YWdlbnQ6OmFwcA==.1","YWdlbnQ6OmdhdGV3YXk=.1","YWdlbnQ6OmZyb250ZW5k.1"]},
-      };
+      await this.doRequest(s);
+      // console.log(services);
+      // const t = {
+      //   query: "query queryData($duration: Duration!, $serviceIds: [ID!]!) {\n  topology: getServicesTopology(duration: $duration, serviceIds: $serviceIds) {\n    nodes {\n      id\n      name\n      type\n      isReal\n    }\n    calls {\n      id\n      source\n      detectPoints\n      target\n    }\n  }}",
+      //   variables: JSON.stringify({duration,serviceIds:["YWdlbnQ6OnNvbmdz.1","YWdlbnQ6OnJlY29tbWVuZGF0aW9u.1","YWdlbnQ6OmFwcA==.1","YWdlbnQ6OmdhdGV3YXk=.1","YWdlbnQ6OmZyb250ZW5k.1"]}),
+      // };
       // fetch topology data from api
-     await this.doRequest(t);
+    //  await this.doRequest(t);
       return new MutableDataFrame({
         refId: target.refId,
         fields: [
