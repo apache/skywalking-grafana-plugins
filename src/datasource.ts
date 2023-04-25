@@ -90,12 +90,11 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
           preferredVisualisationType: 'nodeGraph',
         }
       });
-      console.log(res.data.topology);
       for (const node of nodes) {
         nodeFrame.add({id: node.id, title: node.name});
       }
       for (const call of calls) {
-        nodeFrame.add({id: call.id, target: call.target, source: call.source});
+        edgeFrame.add({id: call.id, target: call.target, source: call.source});
       }
       return [nodeFrame, edgeFrame];
     });
