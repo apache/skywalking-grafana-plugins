@@ -13,17 +13,7 @@ import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 
 import { MyQuery, MyDataSourceOptions, DEFAULT_QUERY } from './types';
-import {fragments } from "./constant";
-
-// proxy route
-const routePath = '/graphql';
-enum TimeType {
-  MINUTE_TIME = "MINUTE",
-  HOUR_TIME = "HOUR",
-  DAY_TIME = "DAY",
-}
-
-
+import {Fragments, RoutePath, TimeType } from "./constant";
 
 export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   URL: string;
@@ -50,17 +40,16 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       end: this.dateFormatStep(dates.end, dates.step),
       step: dates.step,
     };
-    // Return a constant for each query.
     const promises = options.targets.map(async (target) => {
       const query = defaults(target, DEFAULT_QUERY);
       const serviceName = getTemplateSrv().replace(query.queryText, options.scopedVars);
       let t: any = {
-        query: fragments.globalTopology,
+        query: Fragments.globalTopology,
         variables: {duration},
       };
       if (serviceName) {
         const  s =  {
-          query: fragments.services,
+          query: Fragments.services,
           variables: {duration, keyword: ""},
         };
         // fetch services from api
@@ -68,7 +57,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         const serviceObj = (resp.data.services || []).find((d: {name: string, id: string}) => d.name === serviceName);
         if(serviceObj) {
           t = {
-            query: fragments.serviceTopolgy,
+            query: Fragments.serviceTopolgy,
             variables: {serviceId: serviceObj.id, duration},
           };
         }
@@ -116,7 +105,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   async doRequest(params?: Record<string, any>) {
     // Do the request on proxy; the server will replace url + routePath with the url
     // defined in plugin.json
-    const result = getBackendSrv().post(`${this.URL}${routePath}`, params, {headers: {
+    const result = getBackendSrv().post(`${this.URL}${RoutePath}`, params, {headers: {
       'Content-Type': 'application/json'
     } });
 

@@ -13,7 +13,6 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
   const onRunQueryText = () => {
     onRunQuery();
   };
-
   const { queryText } = query;
 
   return (
