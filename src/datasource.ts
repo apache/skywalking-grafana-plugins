@@ -13,6 +13,7 @@ import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 
 import { MyQuery, MyDataSourceOptions, DEFAULT_QUERY } from './types';
+import {fragments } from "./constant";
 
 // proxy route
 const routePath = '/graphql';
@@ -35,6 +36,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
 
   async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
+    console.log(options);
     const { range } = options;
     const from = range!.from.valueOf();
     const to = range!.to.valueOf();
@@ -52,17 +54,26 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     // Return a constant for each query.
     const promises = options.targets.map(async (target) => {
       const query = defaults(target, DEFAULT_QUERY);
-      getTemplateSrv().replace(query.queryText, options.scopedVars);
+      const serviceName = getTemplateSrv().replace(query.queryText, options.scopedVars);
       const  s =  {
-        query: "query queryServices($duration: Duration!,$keyword: String!) {\n    services: getAllServices(duration: $duration, group: $keyword) {\n      key: id\n      label: name\n      group\n    }\n  }",
+        query: fragments.services,
         variables: {duration, keyword: ""},
       };
       // fetch services from api
-      await this.doRequest(s)
-      const t = {
-        query: "query queryData($duration: Duration!) {\n  topology: getGlobalTopology(duration: $duration) {\n    nodes {\n      id\n      name\n      type\n      isReal\n    }\n    calls {\n      id\n      source\n      detectPoints\n      target\n    }\n  }}",
+      const resp = await this.doRequest(s);
+      console.log(resp);
+      let t: any = {
+        query: fragments.globalTopology,
         variables: {duration},
       };
+      if (serviceName) {
+        const serviceObj = resp.data.data.services.find((d: {name: string, id: string}) => d.name === serviceName);
+        t = {
+          query: fragments.serviceTopolgy,
+          variables: {serviceId: serviceObj.id, duration},
+        };
+      }
+      
       // fetch topology data from api
       const res = await this.doRequest(t);
       const nodes = res.data.topology.nodes || [];
