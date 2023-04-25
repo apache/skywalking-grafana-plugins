@@ -60,7 +60,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       // fetch services from api
       await this.doRequest(s)
       const t = {
-        query: "query queryData($duration: Duration!) {\n  topology: getGlobalTopology(duration: $duration) {\n    nodes {\n      id\n      name: title\n      type\n      isReal\n    }\n    calls {\n      id\n      source\n      detectPoints\n      target\n    }\n  }}",
+        query: "query queryData($duration: Duration!) {\n  topology: getGlobalTopology(duration: $duration) {\n    nodes {\n      id\n      name\n      type\n      isReal\n    }\n    calls {\n      id\n      source\n      detectPoints\n      target\n    }\n  }}",
         variables: {duration},
       };
       // fetch topology data from api
@@ -92,7 +92,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       });
       console.log(res.data.topology);
       for (const node of nodes) {
-        nodeFrame.add({id: node.id, title: node.title});
+        nodeFrame.add({id: node.id, title: node.name});
       }
       for (const call of calls) {
         nodeFrame.add({id: call.id, target: call.target, source: call.source});
