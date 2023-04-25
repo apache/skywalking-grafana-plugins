@@ -65,7 +65,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         };
         // fetch services from api
         const resp = await this.doRequest(s);
-        const serviceObj = (resp.data.services || []).find((d: {name: string, id: string}) => d.name === "agent::recommendation");
+        const serviceObj = (resp.data.services || []).find((d: {name: string, id: string}) => d.name === serviceName);
         if(serviceObj) {
           t = {
             query: fragments.serviceTopolgy,
