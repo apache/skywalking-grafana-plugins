@@ -36,7 +36,6 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
 
   async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
-    console.log(options);
     const { range } = options;
     const from = range!.from.valueOf();
     const to = range!.to.valueOf();
@@ -55,23 +54,24 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     const promises = options.targets.map(async (target) => {
       const query = defaults(target, DEFAULT_QUERY);
       const serviceName = getTemplateSrv().replace(query.queryText, options.scopedVars);
-      const  s =  {
-        query: fragments.services,
-        variables: {duration, keyword: ""},
-      };
-      // fetch services from api
-      const resp = await this.doRequest(s);
-      console.log(resp);
       let t: any = {
         query: fragments.globalTopology,
         variables: {duration},
       };
       if (serviceName) {
-        const serviceObj = resp.data.data.services.find((d: {name: string, id: string}) => d.name === serviceName);
-        t = {
-          query: fragments.serviceTopolgy,
-          variables: {serviceId: serviceObj.id, duration},
+        const  s =  {
+          query: fragments.services,
+          variables: {duration, keyword: ""},
         };
+        // fetch services from api
+        const resp = await this.doRequest(s);
+        const serviceObj = (resp.data.services || []).find((d: {name: string, id: string}) => d.name === "agent::recommendation");
+        if(serviceObj) {
+          t = {
+            query: fragments.serviceTopolgy,
+            variables: {serviceId: serviceObj.id, duration},
+          };
+        }
       }
       
       // fetch topology data from api
