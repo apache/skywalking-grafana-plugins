@@ -50,32 +50,59 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       step: dates.step,
     };
     // Return a constant for each query.
-    const data = options.targets.map(async (target) => {
+    const promises = options.targets.map(async (target) => {
       const query = defaults(target, DEFAULT_QUERY);
       getTemplateSrv().replace(query.queryText, options.scopedVars);
       const  s =  {
         query: "query queryServices($duration: Duration!,$keyword: String!) {\n    services: getAllServices(duration: $duration, group: $keyword) {\n      key: id\n      label: name\n      group\n    }\n  }",
-        variables: {duration},
+        variables: {duration, keyword: ""},
       };
       // fetch services from api
-      await this.doRequest(s);
+      await this.doRequest(s)
       const t = {
-        query: "query queryData($duration: Duration!) {\n  topology: getGlobalTopology(duration: $duration) {\n    nodes {\n      id\n      name\n      type\n      isReal\n    }\n    calls {\n      id\n      source\n      detectPoints\n      target\n    }\n  }}",
+        query: "query queryData($duration: Duration!) {\n  topology: getGlobalTopology(duration: $duration) {\n    nodes {\n      id\n      name: title\n      type\n      isReal\n    }\n    calls {\n      id\n      source\n      detectPoints\n      target\n    }\n  }}",
         variables: {duration},
       };
       // fetch topology data from api
-      await this.doRequest(t);
-      return new MutableDataFrame({
+      const res = await this.doRequest(t);
+      const nodes = res.data.topology.nodes || [];
+      const calls = res.data.topology.calls || [];
+      const nodeFrame =  new MutableDataFrame({
+        name: 'Nodes',
         refId: target.refId,
         fields: [
-          { name: 'Time', values: [from, to], type: FieldType.time },
-          { name: 'Value', values: [target.constant, target.constant], type: FieldType.number },
+          { name: 'id', type: FieldType.string },
+          { name: 'title', type: FieldType.string },
         ],
+        meta: {
+          preferredVisualisationType: 'nodeGraph',
+        }
       });
+      const edgeFrame =  new MutableDataFrame({
+        name: 'Edges',
+        refId: target.refId,
+        fields: [
+          { name: 'id', type: FieldType.string },
+          { name: 'source', type: FieldType.string },
+          { name: 'target', type: FieldType.string },
+        ],
+        meta: {
+          preferredVisualisationType: 'nodeGraph',
+        }
+      });
+      console.log(res.data.topology);
+      for (const node of nodes) {
+        nodeFrame.add({id: node.id, title: node.title});
+      }
+      for (const call of calls) {
+        nodeFrame.add({id: call.id, target: call.target, source: call.source});
+      }
+      return [nodeFrame, edgeFrame];
     });
 
-    return { data };
+    return Promise.all(promises).then(data => ({ data: data[0] }));
   }
+
   async doRequest(params?: Record<string, any>) {
     // Do the request on proxy; the server will replace url + routePath with the url
     // defined in plugin.json
