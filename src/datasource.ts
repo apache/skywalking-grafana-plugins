@@ -42,19 +42,20 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     };
     const promises = options.targets.map(async (target) => {
       const query = defaults(target, DEFAULT_QUERY);
-      const serviceName = getTemplateSrv().replace(query.queryText, options.scopedVars);
+      const str = getTemplateSrv().replace(query.queryText, options.scopedVars);
+      this.validate(str);
       let t: any = {
         query: Fragments.globalTopology,
         variables: {duration},
       };
-      if (serviceName) {
+      if (str) {
         const  s =  {
           query: Fragments.services,
           variables: {duration, keyword: ""},
         };
         // fetch services from api
         const resp = await this.doRequest(s);
-        const serviceObj = (resp.data.services || []).find((d: {name: string, id: string}) => d.name === serviceName);
+        const serviceObj = (resp.data.services || []).find((d: {name: string, id: string}) => d.name === str);
         if(serviceObj) {
           t = {
             query: Fragments.serviceTopolgy,
@@ -106,13 +107,18 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     // Do the request on proxy; the server will replace url + routePath with the url
     // defined in plugin.json
     const result = getBackendSrv().post(`${this.URL}${RoutePath}`, params, {headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Authorization': 'Basic c2t5d2Fsa2luZzpza3l3YWxraW5n',
     } });
 
     return result;
   }
 
-   timeFormat (time: Date[]) {
+  validate(param: string) {
+    console.log(param);
+  }
+
+  timeFormat(time: Date[]) {
     let step: TimeType;
     const unix = Math.round(time[1].getTime()) - Math.round(time[0].getTime());
     if (unix <= 60 * 60 * 1000) {

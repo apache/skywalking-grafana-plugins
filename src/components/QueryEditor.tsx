@@ -17,8 +17,8 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
 
   return (
     <div className="gf-form">
-      <InlineField label="Query Text" labelWidth={16} tooltip="Not used yet">
-        <Input onBlur={onRunQueryText} onChange={onQueryTextChange} value={queryText || ''} />
+      <InlineField label="Query Text"  tooltip="Not used yet">
+        <Input onBlur={onRunQueryText} onChange={onQueryTextChange} value={queryText || ''} width={40} />
       </InlineField>
     </div>
   );
