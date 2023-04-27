@@ -28,22 +28,22 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
   const { service, layer, nodeMetrics, edgeServerMetrics, edgeClientMetrics } = query;
 
   return (
-    <div className="gf-form">
-      <InlineField label="Service"  tooltip="Not used yet">
+    <div className="gf-form-group">
+      <InlineField label="Service"  tooltip="Not used yet" labelWidth={20}>
         <Input onBlur={onRunQueryText} onChange={onServiceChange} value={service || ''} width={40} />
       </InlineField>
-      <InlineField label="Layer"  tooltip="Not used yet">
+      <InlineField label="Layer"  tooltip="Not used yet" labelWidth={20}>
         <Input onBlur={onRunQueryText} onChange={onLayerChange} value={layer || ''} width={40} />
       </InlineField>
-      <InlineField label="Node Metrics"  tooltip="Not used yet">
-        <Input onBlur={onRunQueryText} onChange={onNodeMetricsChange} value={nodeMetrics || ''} width={40} />
+      <InlineField label="Node Metrics"  tooltip="Not used yet" labelWidth={20}>
+        <Input onBlur={onRunQueryText} onChange={onNodeMetricsChange} value={nodeMetrics || ''} width={60} />
       </InlineField>
-      <InlineField label="Edge Server Metrics"  tooltip="Not used yet">
-        <Input onBlur={onRunQueryText} onChange={onEdgeServerMetricsChange} value={edgeServerMetrics || ''} width={40} />
+      <InlineField label="Edge Server Metrics"  tooltip="Not used yet" labelWidth={20}>
+          <Input onBlur={onRunQueryText} onChange={onEdgeServerMetricsChange} value={edgeServerMetrics || ''} width={60} />
+        </InlineField>
+      <InlineField label="Edge Client Metrics"  tooltip="Not used yet" labelWidth={20}>
+        <Input onBlur={onRunQueryText} onChange={onEdgeClientMetricsChange} value={edgeClientMetrics || ''} width={60} />
       </InlineField>
-      <InlineField label="Edge Client Metrics"  tooltip="Not used yet">
-        <Input onBlur={onRunQueryText} onChange={onEdgeClientMetricsChange} value={edgeClientMetrics || ''} width={40} />
-      </InlineField>
-    </div>
+    </div> 
   );
 }
