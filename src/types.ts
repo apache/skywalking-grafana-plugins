@@ -1,13 +1,14 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
 export interface MyQuery extends DataQuery {
-  queryText?: string;
-  constant: number;
+  service?: string;
+  layer?: string;
+  nodeMetrics?: string;
+  edgeServerMetrics?: string;
+  edgeClientMetrics?: string;
 }
 
-export const DEFAULT_QUERY: Partial<MyQuery> = {
-  constant: 6.5,
-};
+export const DEFAULT_QUERY: Partial<MyQuery> = {};
 
 /**
  * These are options configured for each DataSource instance

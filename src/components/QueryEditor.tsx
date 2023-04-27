@@ -7,18 +7,42 @@ import { MyDataSourceOptions, MyQuery } from '../types';
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
 export function QueryEditor({ query, onChange, onRunQuery }: Props) {
-  const onQueryTextChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange({ ...query, queryText: event.target.value });
+  const onServiceChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onChange({ ...query, service: event.target.value });
+  };
+  const onLayerChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onChange({ ...query, layer: event.target.value });
+  };
+  const onNodeMetricsChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onChange({ ...query, nodeMetrics: event.target.value });
+  };
+  const onEdgeServerMetricsChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onChange({ ...query, edgeServerMetrics: event.target.value });
+  };
+  const onEdgeClientMetricsChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onChange({ ...query, edgeClientMetrics: event.target.value });
   };
   const onRunQueryText = () => {
     onRunQuery();
   };
-  const { queryText } = query;
+  const { service, layer, nodeMetrics, edgeServerMetrics, edgeClientMetrics } = query;
 
   return (
     <div className="gf-form">
-      <InlineField label="Query Text"  tooltip="Not used yet">
-        <Input onBlur={onRunQueryText} onChange={onQueryTextChange} value={queryText || ''} width={40} />
+      <InlineField label="Service"  tooltip="Not used yet">
+        <Input onBlur={onRunQueryText} onChange={onServiceChange} value={service || ''} width={40} />
+      </InlineField>
+      <InlineField label="Layer"  tooltip="Not used yet">
+        <Input onBlur={onRunQueryText} onChange={onLayerChange} value={layer || ''} width={40} />
+      </InlineField>
+      <InlineField label="Node Metrics"  tooltip="Not used yet">
+        <Input onBlur={onRunQueryText} onChange={onNodeMetricsChange} value={nodeMetrics || ''} width={40} />
+      </InlineField>
+      <InlineField label="Edge Server Metrics"  tooltip="Not used yet">
+        <Input onBlur={onRunQueryText} onChange={onEdgeServerMetricsChange} value={edgeServerMetrics || ''} width={40} />
+      </InlineField>
+      <InlineField label="Edge Client Metrics"  tooltip="Not used yet">
+        <Input onBlur={onRunQueryText} onChange={onEdgeClientMetricsChange} value={edgeClientMetrics || ''} width={40} />
       </InlineField>
     </div>
   );

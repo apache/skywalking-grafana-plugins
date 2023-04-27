@@ -42,20 +42,21 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     };
     const promises = options.targets.map(async (target) => {
       const query = defaults(target, DEFAULT_QUERY);
-      const str = getTemplateSrv().replace(query.queryText, options.scopedVars);
-      this.validate(str);
+      const serviceName = getTemplateSrv().replace(query.service, options.scopedVars);
+      const layer = getTemplateSrv().replace(query.layer, options.scopedVars);
+      this.validate(layer);
       let t: any = {
         query: Fragments.globalTopology,
         variables: {duration},
       };
-      if (str) {
+      if (serviceName) {
         const  s =  {
           query: Fragments.services,
           variables: {duration, keyword: ""},
         };
         // fetch services from api
         const resp = await this.doRequest(s);
-        const serviceObj = (resp.data.services || []).find((d: {name: string, id: string}) => d.name === str);
+        const serviceObj = (resp.data.services || []).find((d: {name: string, id: string}) => d.name === serviceName);
         if(serviceObj) {
           t = {
             query: Fragments.serviceTopolgy,
