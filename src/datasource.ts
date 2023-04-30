@@ -43,8 +43,9 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     const promises = options.targets.map(async (target) => {
       const query = defaults(target, DEFAULT_QUERY);
       const serviceName = getTemplateSrv().replace(query.service, options.scopedVars);
-      const layer = getTemplateSrv().replace(query.layer, options.scopedVars);
       const nodeMetrics = getTemplateSrv().replace(query.nodeMetrics, options.scopedVars);
+      const edgeServerMetrics = getTemplateSrv().replace(query.edgeServerMetrics, options.scopedVars);
+      const edgeClientMetrics = getTemplateSrv().replace(query.edgeClientMetrics, options.scopedVars);
       let services = [];
       let t: any = {
         query: Fragments.globalTopology,
@@ -67,18 +68,20 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
           };
         }
       }
-      
+
+      const ids = serviceObj ? [serviceObj.id] : services.map((d: any) => d.id);
       // fetch topology data from api
       const res = await this.doRequest(t);
-      if (layer && nodeMetrics) {
-        const regex = /{[^}]+}/g;
-        const arr = nodeMetrics.match(regex);
-        const metrics = arr?.map((d: string) => JSON.parse(d)) || [];
-        const names = metrics?.map((d: MetricData) => d.name);
-        const ids = serviceObj ? [serviceObj.id] : services.map((d: any) => d.id);
-        const m = this.queryTopologyMetrics(names, ids, duration);
-        const metricJson = await this.doRequest(m);
-        console.log(metricJson);
+
+      // fetch topology metrics from api
+      if (nodeMetrics) {
+        await this.parseMetrics(nodeMetrics, ids, duration);
+      }
+      if (edgeServerMetrics) {
+        await this.parseMetrics(edgeServerMetrics, ids, duration);
+      }
+      if (edgeClientMetrics) {
+        await this.parseMetrics(edgeClientMetrics, ids, duration);
       }
       const nodes = res.data.topology.nodes || [];
       const calls = res.data.topology.calls || [];
@@ -126,6 +129,17 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     } });
 
     return result;
+  }
+
+  async parseMetrics(params: string, ids: string[], duration: DurationTime) {
+    const regex = /{[^}]+}/g;
+    const arr = params.match(regex);
+    const metrics = arr?.map((d: string) => JSON.parse(d)) || [];
+    const names = metrics?.map((d: MetricData) => d.name);
+    const m = this.queryTopologyMetrics(names, ids, duration);
+    const metricJson = await this.doRequest(m);
+
+    return metricJson;
   }
 
   queryTopologyMetrics(metrics: string[], ids: string[], duration: DurationTime) {

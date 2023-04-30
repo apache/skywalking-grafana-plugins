@@ -2,7 +2,6 @@ import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
 export interface MyQuery extends DataQuery {
   service?: string;
-  layer?: string;
   nodeMetrics?: string;
   edgeServerMetrics?: string;
   edgeClientMetrics?: string;
