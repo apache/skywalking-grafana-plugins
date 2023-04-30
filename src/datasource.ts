@@ -12,7 +12,16 @@ import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 
-import { MyQuery, MyDataSourceOptions, DEFAULT_QUERY, DurationTime, MetricData, Call, Node, Recordable } from './types';
+import {
+  MyQuery,
+  MyDataSourceOptions,
+  DEFAULT_QUERY,
+  DurationTime,
+  MetricData,
+  Call,
+  Node,
+  Recordable
+} from './types';
 import {Fragments, RoutePath, TimeType } from "./constant";
 
 export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
@@ -47,7 +56,10 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       const edgeServerMetrics = getTemplateSrv().replace(query.edgeServerMetrics, options.scopedVars);
       const edgeClientMetrics = getTemplateSrv().replace(query.edgeClientMetrics, options.scopedVars);
       let services = [];
-      let t: any = {
+      let t: {
+        query: string;
+        variables: Recordable;
+      } = {
         query: Fragments.globalTopology,
         variables: {duration},
       };
@@ -130,7 +142,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     return Promise.all(promises).then(data => ({ data: data[0] }));
   }
 
-  async doRequest(params?: Record<string, any>) {
+  async doRequest(params?: Recordable) {
     // Do the request on proxy; the server will replace url + routePath with the url
     // defined in plugin.json
     const result = getBackendSrv().post(`${this.URL}${RoutePath}`, params, {headers: {
@@ -156,7 +168,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     if (!(params.nodes.length && params.calls.length)) {
       return {nodes: [], calls: []}
     }
-    const obj = {} as Record<string, any>;
+    const obj = {} as Recordable;
       const nodes = (params.nodes || []).reduce((prev: Node[], next: Node) => {
         if (!obj[next.id]) {
           obj[next.id] = true;
