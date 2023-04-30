@@ -12,7 +12,7 @@ import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 
-import { MyQuery, MyDataSourceOptions, DEFAULT_QUERY } from './types';
+import { MyQuery, MyDataSourceOptions, DEFAULT_QUERY, DurationTime, MetricData } from './types';
 import {Fragments, RoutePath, TimeType } from "./constant";
 
 export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
@@ -44,19 +44,22 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       const query = defaults(target, DEFAULT_QUERY);
       const serviceName = getTemplateSrv().replace(query.service, options.scopedVars);
       const layer = getTemplateSrv().replace(query.layer, options.scopedVars);
-      this.validate(layer);
+      const nodeMetrics = getTemplateSrv().replace(query.nodeMetrics, options.scopedVars);
+      let services = [];
       let t: any = {
         query: Fragments.globalTopology,
         variables: {duration},
       };
+      let serviceObj;
+      // fetch services from api
+      const  s =  {
+        query: Fragments.services,
+        variables: {duration, keyword: ""},
+      };
+      const resp = await this.doRequest(s);
+      services = resp.data.services || [];
       if (serviceName) {
-        const  s =  {
-          query: Fragments.services,
-          variables: {duration, keyword: ""},
-        };
-        // fetch services from api
-        const resp = await this.doRequest(s);
-        const serviceObj = (resp.data.services || []).find((d: {name: string, id: string}) => d.name === serviceName);
+        serviceObj = services.find((d: {name: string, id: string}) => d.name === serviceName);
         if(serviceObj) {
           t = {
             query: Fragments.serviceTopolgy,
@@ -67,6 +70,16 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       
       // fetch topology data from api
       const res = await this.doRequest(t);
+      if (layer && nodeMetrics) {
+        const regex = /{[^}]+}/g;
+        const arr = nodeMetrics.match(regex);
+        const metrics = arr?.map((d: string) => JSON.parse(d)) || [];
+        const names = metrics?.map((d: MetricData) => d.name);
+        const ids = serviceObj ? [serviceObj.id] : services.map((d: any) => d.id);
+        const m = this.queryTopologyMetrics(names, ids, duration);
+        const metricJson = await this.doRequest(m);
+        console.log(metricJson);
+      }
       const nodes = res.data.topology.nodes || [];
       const calls = res.data.topology.calls || [];
       const nodeFrame =  new MutableDataFrame({
@@ -115,8 +128,29 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     return result;
   }
 
-  validate(param: string) {
-    console.log(param);
+  queryTopologyMetrics(metrics: string[], ids: string[], duration: DurationTime) {
+    const conditions: { [key: string]: unknown } = {
+      duration,
+      ids,
+    };
+    const variables: string[] = [`$duration: Duration!`, `$ids: [ID!]!`];
+    const fragmentList = metrics.map((d: string, index: number) => {
+      conditions[`m${index}`] = d;
+      variables.push(`$m${index}: String!`);
+
+      return `${d}: getValues(metric: {
+        name: $m${index}
+        ids: $ids
+      }, duration: $duration) {
+        values {
+          id
+          value
+        }
+      }`;
+    });
+    const query = `query queryData(${variables}) {${fragmentList.join(" ")}}`;
+
+    return { query, variables: conditions };
   }
 
   timeFormat(time: Date[]) {

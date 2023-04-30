@@ -24,3 +24,16 @@ export interface MyDataSourceOptions extends DataSourceJsonData {
 export interface MySecureJsonData {
   apiKey?: string;
 }
+
+export type DurationTime = {
+  start: string;
+  end: string;
+  step: string;
+}
+
+export type MetricData = {
+  name: string;
+  unit: string;
+  label: string;
+  calculation: string;
+}

@@ -57,7 +57,7 @@ export function ConfigEditor(props: Props) {
         <Input
           onChange={onURLChange}
           value={jsonData.URL || ''}
-          placeholder="http://skywalking.example.com"
+          placeholder="http://skywalking.example.com/graphql"
           width={40}
         />
       </InlineField>
