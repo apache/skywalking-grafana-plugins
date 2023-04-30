@@ -36,3 +36,20 @@ export type MetricData = {
   label: string;
   calculation: string;
 }
+
+export type Call = {
+  source: string;
+  target: string;
+  id: string;
+  detectPoints: string[];
+  type?: string;
+  sourceComponents: string[];
+  targetComponents: string[];
+}
+export type Node = {
+  id: string;
+  name: string;
+  type: string;
+  isReal: boolean;
+  serviceName?: string;
+}

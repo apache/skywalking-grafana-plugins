@@ -12,7 +12,7 @@ import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 
-import { MyQuery, MyDataSourceOptions, DEFAULT_QUERY, DurationTime, MetricData } from './types';
+import { MyQuery, MyDataSourceOptions, DEFAULT_QUERY, DurationTime, MetricData, Call, Node } from './types';
 import {Fragments, RoutePath, TimeType } from "./constant";
 
 export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
@@ -69,22 +69,24 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         }
       }
 
-      const ids = serviceObj ? [serviceObj.id] : services.map((d: any) => d.id);
       // fetch topology data from api
       const res = await this.doRequest(t);
-
+      const {nodes, calls} = this.setTopologyData({nodes: res.data.topology.nodes || [],  calls: res.data.topology.calls || []});
+      const idsS = calls.filter((i: Call) => i.detectPoints.includes("SERVER")).map((b: Call) => b.id);
+      const idsC = calls.filter((i: Call) => i.detectPoints.includes("CLIENT")).map((b: Call) => b.id);
+      const ids = nodes.map((d: Node) => d.id);
       // fetch topology metrics from api
-      if (nodeMetrics) {
-        await this.parseMetrics(nodeMetrics, ids, duration);
-      }
-      if (edgeServerMetrics) {
-        await this.parseMetrics(edgeServerMetrics, ids, duration);
-      }
-      if (edgeClientMetrics) {
-        await this.parseMetrics(edgeClientMetrics, ids, duration);
-      }
-      const nodes = res.data.topology.nodes || [];
-      const calls = res.data.topology.calls || [];
+      const nodeMetricsResp = nodeMetrics ? await this.parseMetrics(nodeMetrics, ids, duration) : null;
+      const edgeServerMetricsResp = edgeServerMetrics && idsS.length ? await this.parseMetrics(edgeServerMetrics, idsS, duration) : null;
+      const edgeClientMetricsResp = edgeClientMetrics && idsC.length ? await this.parseMetrics(edgeClientMetrics, idsC, duration) : null;
+      const topology = this.setTopologyMetrics({
+        nodes,
+        calls,
+        nodeMetrics: nodeMetricsResp ? nodeMetricsResp.data : undefined,
+        edgeServerMetrics: edgeServerMetricsResp ? edgeServerMetricsResp.data : undefined,
+        edgeClientMetrics: edgeClientMetricsResp ? edgeClientMetricsResp.data : undefined,
+      });
+      console.log(topology);
       const nodeFrame =  new MutableDataFrame({
         name: 'Nodes',
         refId: target.refId,
@@ -140,6 +142,59 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     const metricJson = await this.doRequest(m);
 
     return metricJson;
+  }
+
+  setTopologyData(params: {nodes: Node[], calls: Call[]}) {
+    const obj = {} as Record<string, any>;
+      const nodes = (params.nodes || []).reduce((prev: Node[], next: Node) => {
+        if (!obj[next.id]) {
+          obj[next.id] = true;
+          prev.push(next);
+        }
+        return prev;
+      }, []);
+      const calls = (params.calls || []).reduce((prev: Call[], next: Call) => {
+        if (!obj[next.id]) {
+          obj[next.id] = true;
+          prev.push(next);
+        }
+        return prev;
+      }, []);
+      return {nodes, calls}
+  }
+
+  setTopologyMetrics(params: {nodes: Node[], calls: Call[], nodeMetrics: Record<string, any>, edgeServerMetrics: Record<string, any>, edgeClientMetrics: Record<string, any>}) {
+    const obj = {} as Record<string, any>;
+      const nodes = (params.nodes || []).reduce((prev: Record<string, any>, next: Record<string, any>) => {
+        if (!obj[next.id]) {
+          obj[next.id] = true;
+          if (params.nodeMetrics) {
+            for (const k of Object.keys(params.nodeMetrics)) {
+              const m = (params.nodeMetrics[k].values).find((v: {id: string}) => v.id === next.id) || {value: NaN};
+              next[`detail__${k}`] = m.value;
+            }
+          }
+          prev.push(next);
+        }
+        return prev;
+      }, []);
+      const calls = (params.calls || []).reduce((prev: any[], next: any) => {
+        if (!obj[next.id]) {
+          obj[next.id] = true;
+          for (const k of Object.keys(params.edgeServerMetrics)) {
+            const m = (params.edgeServerMetrics[k].values).find((v: {id: string}) => v.id === next.id) || {value: NaN};
+            next[`detail__${k}`] = m.value;
+          }
+          for (const k of Object.keys(params.edgeClientMetrics)) {
+            const m = (params.edgeClientMetrics[k].values).find((v: {id: string}) => v.id === next.id) || {value: NaN};
+            next[`detail__${k}`] = m.value;
+          }
+          next.value = next.value || 1;
+          prev.push(next);
+        }
+        return prev;
+      }, []);
+      return {nodes, calls}
   }
 
   queryTopologyMetrics(metrics: string[], ids: string[], duration: DurationTime) {
