@@ -12,7 +12,7 @@ import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 
-import { MyQuery, MyDataSourceOptions, DEFAULT_QUERY, DurationTime, MetricData, Call, Node } from './types';
+import { MyQuery, MyDataSourceOptions, DEFAULT_QUERY, DurationTime, MetricData, Call, Node, Recordable } from './types';
 import {Fragments, RoutePath, TimeType } from "./constant";
 
 export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
@@ -86,6 +86,11 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         edgeServerMetrics: edgeServerMetricsResp ? edgeServerMetricsResp.data : undefined,
         edgeClientMetrics: edgeClientMetricsResp ? edgeClientMetricsResp.data : undefined,
       });
+      const {nodeFieldTypes, edgeServerFieldTypes, edgeClientFieldTypes} = this.setFieldTypes({
+        nodeMetrics: nodeMetricsResp ? nodeMetricsResp.data : undefined,
+        edgeServerMetrics: edgeServerMetricsResp ? edgeServerMetricsResp.data : undefined,
+        edgeClientMetrics: edgeClientMetricsResp ? edgeClientMetricsResp.data : undefined,
+      });
       console.log(topology);
       const nodeFrame =  new MutableDataFrame({
         name: 'Nodes',
@@ -93,6 +98,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         fields: [
           { name: 'id', type: FieldType.string },
           { name: 'title', type: FieldType.string },
+          ...nodeFieldTypes
         ],
         meta: {
           preferredVisualisationType: 'nodeGraph',
@@ -105,16 +111,18 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
           { name: 'id', type: FieldType.string },
           { name: 'source', type: FieldType.string },
           { name: 'target', type: FieldType.string },
+          ...edgeServerFieldTypes,
+          ...edgeClientFieldTypes,
         ],
         meta: {
           preferredVisualisationType: 'nodeGraph',
         }
       });
       for (const node of nodes) {
-        nodeFrame.add({id: node.id, title: node.name});
+        nodeFrame.add({...node, title: node.name});
       }
       for (const call of calls) {
-        edgeFrame.add({id: call.id, target: call.target, source: call.source});
+        edgeFrame.add(call);
       }
       return [nodeFrame, edgeFrame];
     });
@@ -145,6 +153,9 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
 
   setTopologyData(params: {nodes: Node[], calls: Call[]}) {
+    if (!(params.nodes.length && params.calls.length)) {
+      return {nodes: [], calls: []}
+    }
     const obj = {} as Record<string, any>;
       const nodes = (params.nodes || []).reduce((prev: Node[], next: Node) => {
         if (!obj[next.id]) {
@@ -163,37 +174,48 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       return {nodes, calls}
   }
 
-  setTopologyMetrics(params: {nodes: Node[], calls: Call[], nodeMetrics: Record<string, any>, edgeServerMetrics: Record<string, any>, edgeClientMetrics: Record<string, any>}) {
-    const obj = {} as Record<string, any>;
-      const nodes = (params.nodes || []).reduce((prev: Record<string, any>, next: Record<string, any>) => {
-        if (!obj[next.id]) {
-          obj[next.id] = true;
-          if (params.nodeMetrics) {
-            for (const k of Object.keys(params.nodeMetrics)) {
-              const m = (params.nodeMetrics[k].values).find((v: {id: string}) => v.id === next.id) || {value: NaN};
-              next[`detail__${k}`] = m.value;
-            }
-          }
-          prev.push(next);
-        }
-        return prev;
-      }, []);
-      const calls = (params.calls || []).reduce((prev: any[], next: any) => {
-        if (!obj[next.id]) {
-          obj[next.id] = true;
-          for (const k of Object.keys(params.edgeServerMetrics)) {
-            const m = (params.edgeServerMetrics[k].values).find((v: {id: string}) => v.id === next.id) || {value: NaN};
-            next[`detail__${k}`] = m.value;
-          }
-          for (const k of Object.keys(params.edgeClientMetrics)) {
-            const m = (params.edgeClientMetrics[k].values).find((v: {id: string}) => v.id === next.id) || {value: NaN};
-            next[`detail__${k}`] = m.value;
-          }
-          next.value = next.value || 1;
-          prev.push(next);
-        }
-        return prev;
-      }, []);
+  setFieldTypes(params: {nodeMetrics: Recordable, edgeServerMetrics: Recordable, edgeClientMetrics: Recordable}) {
+    const nodeMetrics = params.nodeMetrics || {};
+    const edgeServerMetrics = params.edgeServerMetrics || {};
+    const edgeClientMetrics = params.edgeClientMetrics || {};
+    const nodeFieldTypes = this.getTypes(nodeMetrics);
+    const edgeServerFieldTypes = this.getTypes(edgeServerMetrics);
+    const edgeClientFieldTypes = this.getTypes(edgeClientMetrics);
+
+    return {nodeFieldTypes, edgeServerFieldTypes, edgeClientFieldTypes};
+  }
+
+  getTypes(metrics: Recordable) {
+    const types = Object.keys(metrics).map((k: string) => {
+      return { name: `detail__${k}`, type: FieldType.number };
+    });
+
+    return types;
+  }
+
+  setTopologyMetrics(params: {nodes: Node[], calls: Call[], nodeMetrics: Recordable, edgeServerMetrics: Recordable, edgeClientMetrics: Recordable}) {
+    const nodeMetrics = params.nodeMetrics || {};
+    const edgeServerMetrics = params.edgeServerMetrics || {};
+    const edgeClientMetrics = params.edgeClientMetrics || {};
+    const nodes = params.nodes.map((next: Node) => {
+      for (const k of Object.keys(nodeMetrics)) {
+        const m = (nodeMetrics[k].values).find((v: {id: string}) => v.id === next.id) || {value: NaN};
+        next[`detail__${k}`] = m.value;
+      }
+      return next;
+    })
+    const calls = params.calls.map((next: Call) => {
+      for (const k of Object.keys(edgeServerMetrics)) {
+        const m = (edgeServerMetrics[k].values).find((v: {id: string}) => v.id === next.id) || {value: NaN};
+        next[`detail__${k}`] = m.value;
+      }
+      for (const k of Object.keys(edgeClientMetrics)) {
+        const m = (edgeClientMetrics[k].values).find((v: {id: string}) => v.id === next.id) || {value: NaN};
+        next[`detail__${k}`] = m.value;
+      }
+      return next;
+    })
+    
       return {nodes, calls}
   }
 

@@ -37,7 +37,15 @@ export type MetricData = {
   calculation: string;
 }
 
-export type Call = {
+export type Recordable = Record<string, any>;
+export interface Node extends Recordable {
+  id: string;
+  name: string;
+  type: string;
+  isReal: boolean;
+  serviceName?: string;
+}
+export interface Call extends Recordable {
   source: string;
   target: string;
   id: string;
@@ -45,11 +53,4 @@ export type Call = {
   type?: string;
   sourceComponents: string[];
   targetComponents: string[];
-}
-export type Node = {
-  id: string;
-  name: string;
-  type: string;
-  isReal: boolean;
-  serviceName?: string;
 }
