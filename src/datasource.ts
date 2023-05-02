@@ -6,6 +6,7 @@ import {
   DataSourceInstanceSettings,
   MutableDataFrame,
   FieldType,
+  FieldColorModeId,
 } from '@grafana/data';
 import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
 import dayjs from "dayjs";
@@ -200,18 +201,18 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   getTypes(metrics: Recordable, type: string) {
     const types = Object.keys(metrics).map((k: string, index: number) => {
       if (type === 'edgeC') {
-        return { name: `detail__${k}`, type: FieldType.number };;
+        return { name: `detail__${k}`, type: FieldType.number, config: {displayName: k} };;
       }
       if (index === 0) {
-        return { name: 'mainstat', type: FieldType.number };
+        return { name: 'mainstat', type: FieldType.number, config: {} };
       }
       if (index === 1) {
-        return { name: 'secondarystat', type: FieldType.number };
+        return { name: 'secondarystat', type: FieldType.number, config: {} };
       }
       if (type === 'edgeS') {
-        return { name: `detail__${k}`, type: FieldType.number };;
+        return { name: `detail__${k}`, type: FieldType.number, config: {displayName: k} };;
       }
-      return { name: `arc__${k}`, type: FieldType.number };
+      return { name: `arc__${k}`, type: FieldType.number, config: {fixedColor: 'green', mode: FieldColorModeId.Fixed} };
     });
 
     return types;
@@ -241,7 +242,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
           next.mainstat = m.value;
         } else if (index === 1) {
           next.secondarystat = m.value;
-        } else{
+        } else {
           next[`detail__${k}`] = m.value;
         }
       }
