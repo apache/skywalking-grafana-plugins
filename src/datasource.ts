@@ -190,16 +190,28 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     const nodeMetrics = params.nodeMetrics || {};
     const edgeServerMetrics = params.edgeServerMetrics || {};
     const edgeClientMetrics = params.edgeClientMetrics || {};
-    const nodeFieldTypes = this.getTypes(nodeMetrics);
-    const edgeServerFieldTypes = this.getTypes(edgeServerMetrics);
-    const edgeClientFieldTypes = this.getTypes(edgeClientMetrics);
+    const nodeFieldTypes = this.getTypes(nodeMetrics, 'node');
+    const edgeServerFieldTypes = this.getTypes(edgeServerMetrics, 'edgeS');
+    const edgeClientFieldTypes = this.getTypes(edgeClientMetrics, 'edgeC');
 
     return {nodeFieldTypes, edgeServerFieldTypes, edgeClientFieldTypes};
   }
 
-  getTypes(metrics: Recordable) {
-    const types = Object.keys(metrics).map((k: string) => {
-      return { name: `detail__${k}`, type: FieldType.number };
+  getTypes(metrics: Recordable, type: string) {
+    const types = Object.keys(metrics).map((k: string, index: number) => {
+      if (type === 'edgeC') {
+        return { name: `detail__${k}`, type: FieldType.number };;
+      }
+      if (index === 0) {
+        return { name: 'mainstat', type: FieldType.number };
+      }
+      if (index === 1) {
+        return { name: 'secondarystat', type: FieldType.number };
+      }
+      if (type === 'edgeS') {
+        return { name: `detail__${k}`, type: FieldType.number };;
+      }
+      return { name: `arc__${k}`, type: FieldType.number };
     });
 
     return types;
@@ -210,16 +222,28 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     const edgeServerMetrics = params.edgeServerMetrics || {};
     const edgeClientMetrics = params.edgeClientMetrics || {};
     const nodes = params.nodes.map((next: Node) => {
-      for (const k of Object.keys(nodeMetrics)) {
+      for (const [index, k] of Object.keys(nodeMetrics).entries()) {
         const m = (nodeMetrics[k].values).find((v: {id: string}) => v.id === next.id) || {value: NaN};
-        next[`detail__${k}`] = m.value;
+        if (index === 0) {
+          next.mainstat = m.value;
+        } else if (index === 1) {
+          next.secondarystat = m.value;
+        } else {
+          next[`arc__${k}`] = m.value;
+        }
       }
       return next;
     })
     const calls = params.calls.map((next: Call) => {
-      for (const k of Object.keys(edgeServerMetrics)) {
+      for (const [index, k] of Object.keys(edgeServerMetrics).entries()) {
         const m = (edgeServerMetrics[k].values).find((v: {id: string}) => v.id === next.id) || {value: NaN};
-        next[`detail__${k}`] = m.value;
+        if (index === 0) {
+          next.mainstat = m.value;
+        } else if (index === 1) {
+          next.secondarystat = m.value;
+        } else{
+          next[`detail__${k}`] = m.value;
+        }
       }
       for (const k of Object.keys(edgeClientMetrics)) {
         const m = (edgeClientMetrics[k].values).find((v: {id: string}) => v.id === next.id) || {value: NaN};
@@ -227,8 +251,8 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       }
       return next;
     })
-    
-      return {nodes, calls}
+
+    return {nodes, calls}
   }
 
   queryTopologyMetrics(metrics: string[], ids: string[], duration: DurationTime) {
