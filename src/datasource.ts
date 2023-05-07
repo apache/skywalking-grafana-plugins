@@ -6,7 +6,7 @@ import {
   DataSourceInstanceSettings,
   MutableDataFrame,
   FieldType,
-  FieldColorModeId,
+  // FieldColorModeId,
 } from '@grafana/data';
 import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
 import dayjs from "dayjs";
@@ -103,9 +103,9 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         edgeClientMetrics: edgeClientMetricsResp ? {...edgeClientMetricsResp, config: nodeMetrics} : undefined,
       });
       const {nodeFieldTypes, edgeServerFieldTypes, edgeClientFieldTypes} = this.setFieldTypes({
-        nodeMetrics: nodeMetricsResp ? nodeMetricsResp.data : undefined,
-        edgeServerMetrics: edgeServerMetricsResp ? edgeServerMetricsResp.data : undefined,
-        edgeClientMetrics: edgeClientMetricsResp ? edgeClientMetricsResp.data : undefined,
+        nodeMetrics: nodeMetricsResp ? {...nodeMetricsResp, config: nodeMetrics} : undefined,
+        edgeServerMetrics: edgeServerMetricsResp ? {...edgeServerMetricsResp, config: nodeMetrics} : undefined,
+        edgeClientMetrics: edgeClientMetricsResp ? {...edgeClientMetricsResp, config: nodeMetrics} : undefined,
       });
       console.log(topology);
       const nodeFrame =  new MutableDataFrame({
@@ -196,9 +196,9 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
 
   setFieldTypes(params: {nodeMetrics: Recordable, edgeServerMetrics: Recordable, edgeClientMetrics: Recordable}) {
-    const nodeMetrics = params.nodeMetrics || {};
-    const edgeServerMetrics = params.edgeServerMetrics || {};
-    const edgeClientMetrics = params.edgeClientMetrics || {};
+    const nodeMetrics = params.nodeMetrics || {config: [], data: {}};
+    const edgeServerMetrics = params.edgeServerMetrics || {config: [], data: {}};
+    const edgeClientMetrics = params.edgeClientMetrics || {config: [], data: {}};
     const nodeFieldTypes = this.getTypes(nodeMetrics, 'node');
     const edgeServerFieldTypes = this.getTypes(edgeServerMetrics, 'edgeS');
     const edgeClientFieldTypes = this.getTypes(edgeClientMetrics, 'edgeC');
@@ -207,20 +207,21 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
 
   getTypes(metrics: Recordable, type: string) {
-    const types = Object.keys(metrics).map((k: string, index: number) => {
+    const types = Object.keys(metrics.data).map((k: string, index: number) => {
+      const c = metrics.config.find((d: MetricData) => d.name === k) || {};
       if (type === 'edgeC') {
-        return { name: `detail__${k}`, type: FieldType.number, config: {displayName: k} };;
+        return { name: `detail__${k}`, type: FieldType.number, config: {displayName: `${c.label || k} ${c.unit || ''}`} };
       }
       if (index === 0) {
-        return { name: 'mainstat', type: FieldType.number, config: {} };
+        return { name: 'mainstat', type: FieldType.number};
       }
       if (index === 1) {
-        return { name: 'secondarystat', type: FieldType.number, config: {} };
+        return { name: 'secondarystat', type: FieldType.number};
       }
       if (type === 'edgeS') {
-        return { name: `detail__${k}`, type: FieldType.number, config: {displayName: k} };;
+        return { name: `detail__${k}`, type: FieldType.number, config: {displayName: `${c.label || k} ${c.unit || ''}`} };
       }
-      return { name: `arc__${k}`, type: FieldType.number, config: {fixedColor: 'green', mode: FieldColorModeId.Fixed} };
+      return { name: `detail__${k}`, type: FieldType.number, config: {displayName:`${c.label || k} ${c.unit || ''}`} };
     });
 
     return types;
@@ -240,7 +241,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         } else if (index === 1) {
           next.secondarystat = value;
         } else {
-          next[`arc__${k}`] = value;
+          next[`detail__${k}`] = value;
         }
       }
       return next;

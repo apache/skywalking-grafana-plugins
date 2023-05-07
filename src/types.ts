@@ -34,9 +34,11 @@ export type MetricData = {
   name: string;
   label: string;
   calculation: string;
+  unit: string;
 }
 
 export type Recordable = Record<string, any>;
+
 export interface Node extends Recordable {
   id: string;
   name: string;
