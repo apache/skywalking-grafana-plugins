@@ -32,7 +32,6 @@ export type DurationTime = {
 
 export type MetricData = {
   name: string;
-  unit: string;
   label: string;
   calculation: string;
 }

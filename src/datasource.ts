@@ -23,7 +23,7 @@ import {
   Node,
   Recordable
 } from './types';
-import {Fragments, RoutePath, TimeType } from "./constant";
+import {Fragments, RoutePath, TimeType, Calculations } from "./constant";
 
 export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   URL: string;
@@ -53,9 +53,12 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     const promises = options.targets.map(async (target) => {
       const query = defaults(target, DEFAULT_QUERY);
       const serviceName = getTemplateSrv().replace(query.service, options.scopedVars);
-      const nodeMetrics = getTemplateSrv().replace(query.nodeMetrics, options.scopedVars);
-      const edgeServerMetrics = getTemplateSrv().replace(query.edgeServerMetrics, options.scopedVars);
-      const edgeClientMetrics = getTemplateSrv().replace(query.edgeClientMetrics, options.scopedVars);
+      const nodeMetricsStr = getTemplateSrv().replace(query.nodeMetrics, options.scopedVars);
+      const nodeMetrics = nodeMetricsStr ? this.parseMetrics(nodeMetricsStr) : [];
+      const edgeServerMetricsStr = getTemplateSrv().replace(query.edgeServerMetrics, options.scopedVars);
+      const edgeServerMetrics = edgeServerMetricsStr ? this.parseMetrics(edgeServerMetricsStr) : [];
+      const edgeClientMetricsStr = getTemplateSrv().replace(query.edgeClientMetrics, options.scopedVars);
+      const edgeClientMetrics = edgeClientMetricsStr ? this.parseMetrics(edgeClientMetricsStr) : [];
       let services = [];
       let t: {
         query: string;
@@ -89,15 +92,15 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       const idsC = calls.filter((i: Call) => i.detectPoints.includes("CLIENT")).map((b: Call) => b.id);
       const ids = nodes.map((d: Node) => d.id);
       // fetch topology metrics from api
-      const nodeMetricsResp = nodeMetrics ? await this.parseMetrics(nodeMetrics, ids, duration) : null;
-      const edgeServerMetricsResp = edgeServerMetrics && idsS.length ? await this.parseMetrics(edgeServerMetrics, idsS, duration) : null;
-      const edgeClientMetricsResp = edgeClientMetrics && idsC.length ? await this.parseMetrics(edgeClientMetrics, idsC, duration) : null;
+      const nodeMetricsResp = nodeMetrics.length ? await this.queryMetrics(nodeMetrics, ids, duration) : null;
+      const edgeServerMetricsResp = edgeServerMetrics.length && idsS.length ? await this.queryMetrics(edgeServerMetrics, idsS, duration) : null;
+      const edgeClientMetricsResp = edgeClientMetrics.length && idsC.length ? await this.queryMetrics(edgeClientMetrics, idsC, duration) : null;
       const topology = this.setTopologyMetrics({
         nodes,
         calls,
-        nodeMetrics: nodeMetricsResp ? nodeMetricsResp.data : undefined,
-        edgeServerMetrics: edgeServerMetricsResp ? edgeServerMetricsResp.data : undefined,
-        edgeClientMetrics: edgeClientMetricsResp ? edgeClientMetricsResp.data : undefined,
+        nodeMetrics: nodeMetricsResp ? {...nodeMetricsResp, config: nodeMetrics} : undefined,
+        edgeServerMetrics: edgeServerMetricsResp ? {...edgeServerMetricsResp, config: nodeMetrics} : undefined,
+        edgeClientMetrics: edgeClientMetricsResp ? {...edgeClientMetricsResp, config: nodeMetrics} : undefined,
       });
       const {nodeFieldTypes, edgeServerFieldTypes, edgeClientFieldTypes} = this.setFieldTypes({
         nodeMetrics: nodeMetricsResp ? nodeMetricsResp.data : undefined,
@@ -154,11 +157,16 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     return result;
   }
 
-  async parseMetrics(params: string, ids: string[], duration: DurationTime) {
+  parseMetrics(params: string) {
     const regex = /{[^}]+}/g;
     const arr = params.match(regex);
     const metrics = arr?.map((d: string) => JSON.parse(d)) || [];
-    const names = metrics?.map((d: MetricData) => d.name);
+
+    return metrics;
+  }
+
+  async queryMetrics(params: any[], ids: string[], duration: DurationTime) {
+    const names = params.map((d: MetricData) => d.name);
     const m = this.queryTopologyMetrics(names, ids, duration);
     const metricJson = await this.doRequest(m);
 
@@ -223,37 +231,91 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     const edgeServerMetrics = params.edgeServerMetrics || {};
     const edgeClientMetrics = params.edgeClientMetrics || {};
     const nodes = params.nodes.map((next: Node) => {
-      for (const [index, k] of Object.keys(nodeMetrics).entries()) {
-        const m = (nodeMetrics[k].values).find((v: {id: string}) => v.id === next.id) || {value: NaN};
+      for (const [index, k] of Object.keys(nodeMetrics.data).entries()) {
+        const c = nodeMetrics.config.find((d: MetricData) => d.name === k) || {};
+        const m = (nodeMetrics.data[k].values).find((v: {id: string}) => v.id === next.id) || {isEmptyValue: true};
+        const value = m.isEmptyValue ? NaN : this.expression(Number(m.value), c.calculation);
         if (index === 0) {
-          next.mainstat = m.value;
+          next.mainstat = value;
         } else if (index === 1) {
-          next.secondarystat = m.value;
+          next.secondarystat = value;
         } else {
-          next[`arc__${k}`] = m.value;
+          next[`arc__${k}`] = value;
         }
       }
       return next;
     })
     const calls = params.calls.map((next: Call) => {
-      for (const [index, k] of Object.keys(edgeServerMetrics).entries()) {
-        const m = (edgeServerMetrics[k].values).find((v: {id: string}) => v.id === next.id) || {value: NaN};
+      for (const [index, k] of Object.keys(edgeServerMetrics.data).entries()) {
+        const c = edgeServerMetrics.config.find((d: MetricData) => d.name === k) || {};
+        const m = (edgeServerMetrics.data[k].values).find((v: {id: string}) => v.id === next.id) || {value: NaN};
+        const value = m.isEmptyValue ? NaN : this.expression(Number(m.value), c.calculation);
         if (index === 0) {
-          next.mainstat = m.value;
+          next.mainstat = value;
         } else if (index === 1) {
-          next.secondarystat = m.value;
+          next.secondarystat = value;
         } else {
-          next[`detail__${k}`] = m.value;
+          next[`detail__${k}`] = value;
         }
       }
-      for (const k of Object.keys(edgeClientMetrics)) {
-        const m = (edgeClientMetrics[k].values).find((v: {id: string}) => v.id === next.id) || {value: NaN};
-        next[`detail__${k}`] = m.value;
+      for (const k of Object.keys(edgeClientMetrics.data)) {
+        const c = edgeClientMetrics.config.find((d: MetricData) => d.name === k) || {};
+        const m = (edgeClientMetrics.data[k].values).find((v: {id: string}) => v.id === next.id) || {value: NaN};
+        const value = m.isEmptyValue ? NaN : this.expression(Number(m.value), c.calculation);
+        next[`detail__${k}`] = value;
       }
       return next;
     })
 
     return {nodes, calls}
+  }
+
+  expression(val: number, calculation: string): number | string {
+    let data: number | string = Number(val);
+  
+    switch (calculation) {
+      case Calculations.Percentage:
+        data = (val / 100).toFixed(2);
+        break;
+      case Calculations.PercentageAvg:
+        data = (val / 100).toFixed(2);
+        break;
+      case Calculations.ByteToKB:
+        data = (val / 1024).toFixed(2);
+        break;
+      case Calculations.ByteToMB:
+        data = (val / 1024 / 1024).toFixed(2);
+        break;
+      case Calculations.ByteToGB:
+        data = (val / 1024 / 1024 / 1024).toFixed(2);
+        break;
+      case Calculations.Apdex:
+        data = (val / 10000).toFixed(2);
+        break;
+      case Calculations.ConvertSeconds:
+        data = dayjs(val * 1000).format("YYYY-MM-DD HH:mm:ss");
+        break;
+      case Calculations.ConvertMilliseconds:
+        data = dayjs(val).format("YYYY-MM-DD HH:mm:ss");
+        break;
+      case Calculations.MsToS:
+        data = (val / 1000).toFixed(2);
+        break;
+      case Calculations.SecondToDay:
+        data = (val / 86400).toFixed(2);
+        break;
+      case Calculations.NanosecondToMillisecond:
+        data = (val / 1000 / 1000).toFixed(2);
+        break;
+      case Calculations.ApdexAvg:
+        data = (val / 10000).toFixed(2);
+        break;
+      default:
+        data = data;
+        break;
+    }
+  
+    return data;
   }
 
   queryTopologyMetrics(metrics: string[], ids: string[], duration: DurationTime) {

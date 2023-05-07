@@ -12,3 +12,18 @@ export enum TimeType {
   HOUR_TIME = "HOUR",
   DAY_TIME = "DAY",
 }
+export enum Calculations {
+  Percentage = "percentage",
+  ByteToKB = "byteToKB",
+  ByteToMB = "byteToMB",
+  ByteToGB = "byteToGB",
+  Apdex = "apdex",
+  ConvertSeconds = "convertSeconds",
+  ConvertMilliseconds = "convertMilliseconds",
+  MsToS = "msTos",
+  Average = "average",
+  PercentageAvg = "percentageAvg",
+  ApdexAvg = "apdexAvg",
+  SecondToDay = "secondToDay",
+  NanosecondToMillisecond = "nanosecondToMillisecond",
+}
