@@ -227,9 +227,9 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
 
   setTopologyMetrics(params: {nodes: Node[], calls: Call[], nodeMetrics: Recordable, edgeServerMetrics: Recordable, edgeClientMetrics: Recordable}) {
-    const nodeMetrics = params.nodeMetrics || {};
-    const edgeServerMetrics = params.edgeServerMetrics || {};
-    const edgeClientMetrics = params.edgeClientMetrics || {};
+    const nodeMetrics = params.nodeMetrics || {config: [], data: {}};
+    const edgeServerMetrics = params.edgeServerMetrics || {config: [], data: {}};
+    const edgeClientMetrics = params.edgeClientMetrics || {config: [], data: {}};
     const nodes = params.nodes.map((next: Node) => {
       for (const [index, k] of Object.keys(nodeMetrics.data).entries()) {
         const c = nodeMetrics.config.find((d: MetricData) => d.name === k) || {};
