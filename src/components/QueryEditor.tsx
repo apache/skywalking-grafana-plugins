@@ -16,16 +16,13 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
   const onNodeMetricsChange = (event: ChangeEvent<HTMLInputElement>) => {
     onChange({ ...query, nodeMetrics: event.target.value });
   };
-  const onEdgeServerMetricsChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange({ ...query, edgeServerMetrics: event.target.value });
-  };
-  const onEdgeClientMetricsChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange({ ...query, edgeClientMetrics: event.target.value });
+  const onEdgeMetricsChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onChange({ ...query, edgeMetrics: event.target.value });
   };
   const onRunQueryText = () => {
     onRunQuery();
   };
-  const { service, nodeMetrics, edgeServerMetrics, edgeClientMetrics, layer } = query;
+  const { service, nodeMetrics, edgeMetrics, layer } = query;
 
   return (
     <div className="gf-form-group">
@@ -38,12 +35,9 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
       <InlineField label="Node Metrics"  tooltip="Not used yet" labelWidth={20}>
         <Input onBlur={onRunQueryText} onChange={onNodeMetricsChange} value={nodeMetrics || ''} width={60} />
       </InlineField>
-      <InlineField label="Edge Server Metrics"  tooltip="Not used yet" labelWidth={20}>
-          <Input onBlur={onRunQueryText} onChange={onEdgeServerMetricsChange} value={edgeServerMetrics || ''} width={60} />
+      <InlineField label="Edge Metrics"  tooltip="Not used yet" labelWidth={20}>
+          <Input onBlur={onRunQueryText} onChange={onEdgeMetricsChange} value={edgeMetrics || ''} width={60} />
         </InlineField>
-      <InlineField label="Edge Client Metrics"  tooltip="Not used yet" labelWidth={20}>
-        <Input onBlur={onRunQueryText} onChange={onEdgeClientMetricsChange} value={edgeClientMetrics || ''} width={60} />
-      </InlineField>
     </div> 
   );
 }

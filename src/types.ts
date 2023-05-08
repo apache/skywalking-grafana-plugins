@@ -4,8 +4,7 @@ export interface MyQuery extends DataQuery {
   layer?: string;
   service?: string;
   nodeMetrics?: string;
-  edgeServerMetrics?: string;
-  edgeClientMetrics?: string;
+  edgeMetrics?: string;
 }
 
 export const DEFAULT_QUERY: Partial<MyQuery> = {};

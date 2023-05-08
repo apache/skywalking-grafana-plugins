@@ -59,10 +59,8 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       const serviceName = getTemplateSrv().replace(query.service, options.scopedVars);
       const nodeMetricsStr = getTemplateSrv().replace(query.nodeMetrics, options.scopedVars);
       const nodeMetrics = nodeMetricsStr ? this.parseMetrics(nodeMetricsStr) : [];
-      const edgeServerMetricsStr = getTemplateSrv().replace(query.edgeServerMetrics, options.scopedVars);
-      const edgeServerMetrics = edgeServerMetricsStr ? this.parseMetrics(edgeServerMetricsStr) : [];
-      const edgeClientMetricsStr = getTemplateSrv().replace(query.edgeClientMetrics, options.scopedVars);
-      const edgeClientMetrics = edgeClientMetricsStr ? this.parseMetrics(edgeClientMetricsStr) : [];
+      const edgeMetricsStr = getTemplateSrv().replace(query.edgeMetrics, options.scopedVars);
+      const edgeMetrics = edgeMetricsStr ? this.parseMetrics(edgeMetricsStr) : [];
       let services = [];
       // fetch services from api
       const  s =  {
@@ -77,7 +75,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         variables: Recordable;
       } = {
         query: Fragments.servicesTopolgy,
-        variables: {duration},
+        variables: { duration },
       };
       let serviceObj;
       if (serviceName) {
@@ -91,22 +89,32 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       const {nodes, calls} = this.setTopologyData({nodes: res.data.topology.nodes || [],  calls: res.data.topology.calls || []});
       const idsS = calls.filter((i: Call) => i.detectPoints.includes("SERVER")).map((b: Call) => b.id);
       const idsC = calls.filter((i: Call) => i.detectPoints.includes("CLIENT")).map((b: Call) => b.id);
+      const serverMetrics = [];
+      const clientMetrics = [];
+      for (const m of edgeMetrics) {
+        if (m.type === 'SERVER') {
+          serverMetrics.push(m);
+        } else {
+          clientMetrics.push(m);
+        }
+      }
       const ids = nodes.map((d: Node) => d.id);
       // fetch topology metrics from api
       const nodeMetricsResp = nodeMetrics.length ? await this.queryMetrics(nodeMetrics, ids, duration) : null;
-      const edgeServerMetricsResp = edgeServerMetrics.length && idsS.length ? await this.queryMetrics(edgeServerMetrics, idsS, duration) : null;
-      const edgeClientMetricsResp = edgeClientMetrics.length && idsC.length ? await this.queryMetrics(edgeClientMetrics, idsC, duration) : null;
+      const edgeServerMetricsResp = serverMetrics.length && idsS.length ? await this.queryMetrics(serverMetrics, idsS, duration) : null;
+      const edgeClientMetricsResp = clientMetrics.length && idsC.length ? await this.queryMetrics(clientMetrics, idsC, duration) : null;
+      const edgeMetricsResp: any = (edgeServerMetricsResp || edgeClientMetricsResp) ? {
+        data: {...edgeServerMetricsResp.data, ...edgeClientMetricsResp.data}
+      } : null;
       const topology = this.setTopologyMetrics({
         nodes,
         calls,
         nodeMetrics: nodeMetricsResp ? {...nodeMetricsResp, config: nodeMetrics} : undefined,
-        edgeServerMetrics: edgeServerMetricsResp ? {...edgeServerMetricsResp, config: edgeServerMetrics} : undefined,
-        edgeClientMetrics: edgeClientMetricsResp ? {...edgeClientMetricsResp, config: edgeClientMetrics} : undefined,
+        edgeMetrics: edgeMetricsResp ? {...edgeMetricsResp, config: serverMetrics} : undefined,
       });
-      const {nodeFieldTypes, edgeServerFieldTypes, edgeClientFieldTypes} = this.setFieldTypes({
+      const {nodeFieldTypes, edgeFieldTypes} = this.setFieldTypes({
         nodeMetrics: nodeMetricsResp ? {...nodeMetricsResp, config: nodeMetrics} : undefined,
-        edgeServerMetrics: edgeServerMetricsResp ? {...edgeServerMetricsResp, config: edgeServerMetrics} : undefined,
-        edgeClientMetrics: edgeClientMetricsResp ? {...edgeClientMetricsResp, config: edgeClientMetrics} : undefined,
+        edgeMetrics: edgeMetricsResp ? {...edgeMetricsResp, config: edgeMetrics} : undefined,
       });
       console.log(topology);
       const nodeFrame =  new MutableDataFrame({
@@ -128,8 +136,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
           { name: 'id', type: FieldType.string },
           { name: 'source', type: FieldType.string },
           { name: 'target', type: FieldType.string },
-          ...edgeServerFieldTypes,
-          ...edgeClientFieldTypes,
+          ...edgeFieldTypes,
         ],
         meta: {
           preferredVisualisationType: 'nodeGraph',
@@ -196,43 +203,34 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       return {nodes, calls}
   }
 
-  setFieldTypes(params: {nodeMetrics: Recordable, edgeServerMetrics: Recordable, edgeClientMetrics: Recordable}) {
+  setFieldTypes(params: {nodeMetrics: Recordable, edgeMetrics: Recordable}) {
     const nodeMetrics = params.nodeMetrics || {config: [], data: {}};
-    const edgeServerMetrics = params.edgeServerMetrics || {config: [], data: {}};
-    const edgeClientMetrics = params.edgeClientMetrics || {config: [], data: {}};
-    const nodeFieldTypes = this.getTypes(nodeMetrics, 'node');
-    const edgeServerFieldTypes = this.getTypes(edgeServerMetrics, 'edgeS');
-    const edgeClientFieldTypes = this.getTypes(edgeClientMetrics, 'edgeC');
+    const edgeServerMetrics = params.edgeMetrics || {config: [], data: {}};
+    const nodeFieldTypes = this.getTypes(nodeMetrics);
+    const edgeFieldTypes = this.getTypes(edgeServerMetrics);
 
-    return {nodeFieldTypes, edgeServerFieldTypes, edgeClientFieldTypes};
+    return {nodeFieldTypes, edgeFieldTypes};
   }
 
-  getTypes(metrics: Recordable, type: string) {
-    console.log(metrics.config);
+  getTypes(metrics: Recordable) {
     const types = Object.keys(metrics.data).map((k: string, index: number) => {
       const c = metrics.config.find((d: MetricData) => d.name === k) || {};
-      if (type === 'edgeC') {
-        return { name: `detail__${k}`, type: FieldType.number, config: {displayName: `${c.label || k} ${c.unit || ''}`} };
-      }
       if (index === 0) {
         return { name: 'mainstat', type: FieldType.number};
       }
       if (index === 1) {
         return { name: 'secondarystat', type: FieldType.number};
       }
-      if (type === 'edgeS') {
-        return { name: `detail__${k}`, type: FieldType.number, config: {displayName: `${c.label || k} ${c.unit || ''}`} };
-      }
+
       return { name: `detail__${k}`, type: FieldType.number, config: {displayName:`${c.label || k} ${c.unit || ''}`} };
     });
 
     return types;
   }
 
-  setTopologyMetrics(params: {nodes: Node[], calls: Call[], nodeMetrics: Recordable, edgeServerMetrics: Recordable, edgeClientMetrics: Recordable}) {
+  setTopologyMetrics(params: {nodes: Node[], calls: Call[], nodeMetrics: Recordable, edgeMetrics: Recordable}) {
     const nodeMetrics = params.nodeMetrics || {config: [], data: {}};
-    const edgeServerMetrics = params.edgeServerMetrics || {config: [], data: {}};
-    const edgeClientMetrics = params.edgeClientMetrics || {config: [], data: {}};
+    const edgeMetrics = params.edgeMetrics || {config: [], data: {}};
     const nodes = params.nodes.map((next: Node) => {
       for (const [index, k] of Object.keys(nodeMetrics.data).entries()) {
         const c = nodeMetrics.config.find((d: MetricData) => d.name === k) || {};
@@ -249,9 +247,9 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       return next;
     })
     const calls = params.calls.map((next: Call) => {
-      for (const [index, k] of Object.keys(edgeServerMetrics.data).entries()) {
-        const c = edgeServerMetrics.config.find((d: MetricData) => d.name === k) || {};
-        const m = (edgeServerMetrics.data[k].values).find((v: {id: string}) => v.id === next.id) || {value: NaN};
+      for (const [index, k] of Object.keys(edgeMetrics.data).entries()) {
+        const c = edgeMetrics.config.find((d: MetricData) => d.name === k) || {};
+        const m = (edgeMetrics.data[k].values).find((v: {id: string}) => v.id === next.id) || {value: NaN};
         const value = m.isEmptyValue ? NaN : this.expression(Number(m.value), c.calculation);
         if (index === 0) {
           next.mainstat = value;
@@ -260,12 +258,6 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         } else {
           next[`detail__${k}`] = value;
         }
-      }
-      for (const k of Object.keys(edgeClientMetrics.data)) {
-        const c = edgeClientMetrics.config.find((d: MetricData) => d.name === k) || {};
-        const m = (edgeClientMetrics.data[k].values).find((v: {id: string}) => v.id === next.id) || {value: NaN};
-        const value = m.isEmptyValue ? NaN : this.expression(Number(m.value), c.calculation);
-        next[`detail__${k}`] = value;
       }
       return next;
     })
