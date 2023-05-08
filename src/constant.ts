@@ -26,3 +26,26 @@ export enum Calculations {
   SecondToDay = "secondToDay",
   NanosecondToMillisecond = "nanosecondToMillisecond",
 }
+export const NodeMetrics = `{
+  "name": "service_cpm",
+  "label": "Load",
+  "unit": "cpm"
+},
+{
+  "name": "service_sla",
+  "calculation": "percentage",
+  "label": "Success Rate",
+  "unit": "%"
+}`
+
+export const EdgeMetrics = `{
+  "name": "service_relation_server_resp_time",
+  "label": "Client Latency",
+  "unit": "ms",
+  "type": "SERVER"
+},{
+  "name": "service_relation_client_cpm",
+  "label": "Client Load",
+  "unit": "cpm",
+  "type": "CLINET"
+}`

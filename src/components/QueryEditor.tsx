@@ -3,6 +3,7 @@ import { InlineField, Input } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
 import { MyDataSourceOptions, MyQuery } from '../types';
+import {EdgeMetrics, NodeMetrics} from "../constant";
 
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
@@ -31,7 +32,7 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
       }
       onRunQuery();
     } catch(e) {
-      console.error(e);
+      throw new Error('Bad data');
     }
   };
   const parseData = (params: string) => {
@@ -51,10 +52,10 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
       <InlineField label="Service"  tooltip="Not used yet" labelWidth={20}>
         <Input onBlur={onRunQueryText} onChange={onServiceChange} value={service || ''} width={40} />
       </InlineField>
-      <InlineField label="Node Metrics"  tooltip="Not used yet" labelWidth={20}>
+      <InlineField label="Node Metrics"  tooltip={NodeMetrics} labelWidth={20}>
         <Input onBlur={onRunQueryText} onChange={onNodeMetricsChange} value={nodeMetrics || ''} width={60} />
       </InlineField>
-      <InlineField label="Edge Metrics"  tooltip="Not used yet" labelWidth={20}>
+      <InlineField label="Edge Metrics"  tooltip={EdgeMetrics} labelWidth={20}>
         <Input onBlur={onRunQueryText} onChange={onEdgeMetricsChange} value={edgeMetrics || ''} width={60} />
       </InlineField>
     </div> 
