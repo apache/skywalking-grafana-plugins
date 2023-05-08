@@ -1,5 +1,5 @@
 import React, { ChangeEvent } from 'react';
-import { InlineField, Input, Alert } from '@grafana/ui';
+import { InlineField, Input } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
 import { MyDataSourceOptions, MyQuery } from '../types';
@@ -27,7 +27,7 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
       const n = nodeMetrics.find((d: {name: string}) => !d.name);
       const e = edgeMetrics.find((d: {name: string, type: string}) => !(d.name && d.type));
       if (e || n) {
-        return;
+        throw new Error('Bad data');
       }
       onRunQuery();
     } catch(e) {

@@ -110,7 +110,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         nodes,
         calls,
         nodeMetrics: nodeMetricsResp ? {...nodeMetricsResp, config: nodeMetrics} : undefined,
-        edgeMetrics: edgeMetricsResp ? {...edgeMetricsResp, config: serverMetrics} : undefined,
+        edgeMetrics: edgeMetricsResp ? {...edgeMetricsResp, config: edgeMetrics} : undefined,
       });
       const {nodeFieldTypes, edgeFieldTypes} = this.setFieldTypes({
         nodeMetrics: nodeMetricsResp ? {...nodeMetricsResp, config: nodeMetrics} : undefined,
@@ -173,7 +173,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     return metrics;
   }
 
-  async queryMetrics(params: any[], ids: string[], duration: DurationTime) {
+  async queryMetrics(params: MetricData[], ids: string[], duration: DurationTime) {
     const names = params.map((d: MetricData) => d.name);
     const m = this.queryTopologyMetrics(names, ids, duration);
     const metricJson = await this.doRequest(m);
@@ -205,9 +205,9 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
 
   setFieldTypes(params: {nodeMetrics: Recordable, edgeMetrics: Recordable}) {
     const nodeMetrics = params.nodeMetrics || {config: [], data: {}};
-    const edgeServerMetrics = params.edgeMetrics || {config: [], data: {}};
+    const edgeMetrics = params.edgeMetrics || {config: [], data: {}};
     const nodeFieldTypes = this.getTypes(nodeMetrics);
-    const edgeFieldTypes = this.getTypes(edgeServerMetrics);
+    const edgeFieldTypes = this.getTypes(edgeMetrics);
 
     return {nodeFieldTypes, edgeFieldTypes};
   }
@@ -215,11 +215,12 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   getTypes(metrics: Recordable) {
     const types = Object.keys(metrics.data).map((k: string, index: number) => {
       const c = metrics.config.find((d: MetricData) => d.name === k) || {};
+      const config = {displayName: c.label, unit: c.unit};
       if (index === 0) {
-        return { name: 'mainstat', type: FieldType.number, config: {unit: c.unit}};
+        return { name: 'mainstat', type: FieldType.number, config};
       }
       if (index === 1) {
-        return { name: 'secondarystat', type: FieldType.number, config: {unit: c.unit}};
+        return { name: 'secondarystat', type: FieldType.number, config};
       }
 
       return { name: `detail__${k}`, type: FieldType.number, config: {displayName: c.label || k, unit: c.unit} };
@@ -402,8 +403,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     const utcTime = len + offset;
 
     return new Date(utcTime + 3600000 * utc);
-  };
-
+  }
   async testDatasource() {
     // Implement a health check for your data source.
     return {
