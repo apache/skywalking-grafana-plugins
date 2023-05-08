@@ -7,6 +7,9 @@ import { MyDataSourceOptions, MyQuery } from '../types';
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
 export function QueryEditor({ query, onChange, onRunQuery }: Props) {
+  const onLayerChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onChange({ ...query, layer: event.target.value });
+  };
   const onServiceChange = (event: ChangeEvent<HTMLInputElement>) => {
     onChange({ ...query, service: event.target.value });
   };
@@ -22,10 +25,13 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
   const onRunQueryText = () => {
     onRunQuery();
   };
-  const { service, nodeMetrics, edgeServerMetrics, edgeClientMetrics } = query;
+  const { service, nodeMetrics, edgeServerMetrics, edgeClientMetrics, layer } = query;
 
   return (
     <div className="gf-form-group">
+      <InlineField label="Layer"  tooltip="Not used yet" labelWidth={20}>
+        <Input onBlur={onRunQueryText} onChange={onLayerChange} value={layer || ''} width={40} />
+      </InlineField>
       <InlineField label="Service"  tooltip="Not used yet" labelWidth={20}>
         <Input onBlur={onRunQueryText} onChange={onServiceChange} value={service || ''} width={40} />
       </InlineField>

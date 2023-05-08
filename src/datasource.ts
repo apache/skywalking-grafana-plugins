@@ -52,6 +52,10 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     };
     const promises = options.targets.map(async (target) => {
       const query = defaults(target, DEFAULT_QUERY);
+      const layer = getTemplateSrv().replace(query.layer, options.scopedVars);
+      if (!layer) {
+        return [];
+      }
       const serviceName = getTemplateSrv().replace(query.service, options.scopedVars);
       const nodeMetricsStr = getTemplateSrv().replace(query.nodeMetrics, options.scopedVars);
       const nodeMetrics = nodeMetricsStr ? this.parseMetrics(nodeMetricsStr) : [];
@@ -60,14 +64,6 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       const edgeClientMetricsStr = getTemplateSrv().replace(query.edgeClientMetrics, options.scopedVars);
       const edgeClientMetrics = edgeClientMetricsStr ? this.parseMetrics(edgeClientMetricsStr) : [];
       let services = [];
-      let t: {
-        query: string;
-        variables: Recordable;
-      } = {
-        query: Fragments.globalTopology,
-        variables: {duration},
-      };
-      let serviceObj;
       // fetch services from api
       const  s =  {
         query: Fragments.services,
@@ -75,16 +71,21 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       };
       const resp = await this.doRequest(s);
       services = resp.data.services || [];
-      if (serviceName) {
-        serviceObj = services.find((d: {name: string, id: string}) => d.name === serviceName);
-        if(serviceObj) {
-          t = {
-            query: Fragments.serviceTopolgy,
-            variables: {serviceId: serviceObj.id, duration},
-          };
-        }
-      }
 
+      const t: {
+        query: string;
+        variables: Recordable;
+      } = {
+        query: Fragments.servicesTopolgy,
+        variables: {duration},
+      };
+      let serviceObj;
+      if (serviceName) {
+        serviceObj = services.filter((d: {name: string, id: string}) => d.name === serviceName);
+      } else {
+        serviceObj = services.filter((d: {layers: string[], id: string}) => d.layers.includes(layer));
+      }
+      t.variables.serviceIds = serviceObj.map((d: {layers: string[], id: string}) => d.id);
       // fetch topology data from api
       const res = await this.doRequest(t);
       const {nodes, calls} = this.setTopologyData({nodes: res.data.topology.nodes || [],  calls: res.data.topology.calls || []});
