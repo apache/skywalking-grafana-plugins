@@ -1,5 +1,5 @@
 import React, { ChangeEvent } from 'react';
-import { InlineField, Input } from '@grafana/ui';
+import { InlineField, Input, Alert } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
 import { MyDataSourceOptions, MyQuery } from '../types';
@@ -20,7 +20,26 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
     onChange({ ...query, edgeMetrics: event.target.value });
   };
   const onRunQueryText = () => {
-    onRunQuery();
+    try {
+      const nodeMetrics = query.nodeMetrics && parseData(query.nodeMetrics) || [];
+      const edgeMetrics = query.edgeMetrics && parseData(query.edgeMetrics) || [];
+
+      const n = nodeMetrics.find((d: {name: string}) => !d.name);
+      const e = edgeMetrics.find((d: {name: string, type: string}) => !(d.name && d.type));
+      if (e || n) {
+        return;
+      }
+      onRunQuery();
+    } catch(e) {
+      console.error(e);
+    }
+  };
+  const parseData = (params: string) => {
+    const regex = /{[^}]+}/g;
+    const arr = params.match(regex);
+    const metrics = arr?.map((d: string) => JSON.parse(d)) || [];
+
+    return metrics;
   };
   const { service, nodeMetrics, edgeMetrics, layer } = query;
 
@@ -36,8 +55,8 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
         <Input onBlur={onRunQueryText} onChange={onNodeMetricsChange} value={nodeMetrics || ''} width={60} />
       </InlineField>
       <InlineField label="Edge Metrics"  tooltip="Not used yet" labelWidth={20}>
-          <Input onBlur={onRunQueryText} onChange={onEdgeMetricsChange} value={edgeMetrics || ''} width={60} />
-        </InlineField>
+        <Input onBlur={onRunQueryText} onChange={onEdgeMetricsChange} value={edgeMetrics || ''} width={60} />
+      </InlineField>
     </div> 
   );
 }

@@ -216,13 +216,13 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     const types = Object.keys(metrics.data).map((k: string, index: number) => {
       const c = metrics.config.find((d: MetricData) => d.name === k) || {};
       if (index === 0) {
-        return { name: 'mainstat', type: FieldType.number};
+        return { name: 'mainstat', type: FieldType.number, config: {unit: c.unit}};
       }
       if (index === 1) {
-        return { name: 'secondarystat', type: FieldType.number};
+        return { name: 'secondarystat', type: FieldType.number, config: {unit: c.unit}};
       }
 
-      return { name: `detail__${k}`, type: FieldType.number, config: {displayName:`${c.label || k} ${c.unit || ''}`} };
+      return { name: `detail__${k}`, type: FieldType.number, config: {displayName: c.label || k, unit: c.unit} };
     });
 
     return types;
