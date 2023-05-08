@@ -100,13 +100,13 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         nodes,
         calls,
         nodeMetrics: nodeMetricsResp ? {...nodeMetricsResp, config: nodeMetrics} : undefined,
-        edgeServerMetrics: edgeServerMetricsResp ? {...edgeServerMetricsResp, config: nodeMetrics} : undefined,
-        edgeClientMetrics: edgeClientMetricsResp ? {...edgeClientMetricsResp, config: nodeMetrics} : undefined,
+        edgeServerMetrics: edgeServerMetricsResp ? {...edgeServerMetricsResp, config: edgeServerMetrics} : undefined,
+        edgeClientMetrics: edgeClientMetricsResp ? {...edgeClientMetricsResp, config: edgeClientMetrics} : undefined,
       });
       const {nodeFieldTypes, edgeServerFieldTypes, edgeClientFieldTypes} = this.setFieldTypes({
         nodeMetrics: nodeMetricsResp ? {...nodeMetricsResp, config: nodeMetrics} : undefined,
-        edgeServerMetrics: edgeServerMetricsResp ? {...edgeServerMetricsResp, config: nodeMetrics} : undefined,
-        edgeClientMetrics: edgeClientMetricsResp ? {...edgeClientMetricsResp, config: nodeMetrics} : undefined,
+        edgeServerMetrics: edgeServerMetricsResp ? {...edgeServerMetricsResp, config: edgeServerMetrics} : undefined,
+        edgeClientMetrics: edgeClientMetricsResp ? {...edgeClientMetricsResp, config: edgeClientMetrics} : undefined,
       });
       console.log(topology);
       const nodeFrame =  new MutableDataFrame({
@@ -135,10 +135,10 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
           preferredVisualisationType: 'nodeGraph',
         }
       });
-      for (const node of nodes) {
+      for (const node of topology.nodes) {
         nodeFrame.add({...node, title: node.name});
       }
-      for (const call of calls) {
+      for (const call of topology.calls) {
         edgeFrame.add(call);
       }
       return [nodeFrame, edgeFrame];
@@ -150,7 +150,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   async doRequest(params?: Recordable) {
     // Do the request on proxy; the server will replace url + routePath with the url
     // defined in plugin.json
-    const result = getBackendSrv().post(`${this.URL}${RoutePath}`, params, {headers: {
+    const result = getBackendSrv().post(`${this.URL}${RoutePath}`, params, { headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Basic c2t5d2Fsa2luZzpza3l3YWxraW5n',
     } });
@@ -208,6 +208,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
 
   getTypes(metrics: Recordable, type: string) {
+    console.log(metrics.config);
     const types = Object.keys(metrics.data).map((k: string, index: number) => {
       const c = metrics.config.find((d: MetricData) => d.name === k) || {};
       if (type === 'edgeC') {
