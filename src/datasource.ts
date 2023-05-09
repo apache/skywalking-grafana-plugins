@@ -6,7 +6,8 @@ import {
   DataSourceInstanceSettings,
   MutableDataFrame,
   FieldType,
-  // FieldColorModeId,
+  ArrayVector,
+  NodeGraphDataFrameFieldNames,
 } from '@grafana/data';
 import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
 import dayjs from "dayjs";
@@ -53,10 +54,10 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     const promises = options.targets.map(async (target) => {
       const query = defaults(target, DEFAULT_QUERY);
       const layer = getTemplateSrv().replace(query.layer, options.scopedVars);
-      if (!layer) {
+      const serviceName = getTemplateSrv().replace(query.service, options.scopedVars);
+      if (!layer && !serviceName) {
         return [];
       }
-      const serviceName = getTemplateSrv().replace(query.service, options.scopedVars);
       const nodeMetricsStr = getTemplateSrv().replace(query.nodeMetrics, options.scopedVars);
       const nodeMetrics = nodeMetricsStr ? this.parseMetrics(nodeMetricsStr) : [];
       const edgeMetricsStr = getTemplateSrv().replace(query.edgeMetrics, options.scopedVars);
@@ -106,25 +107,16 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       const edgeMetricsResp: any = (edgeServerMetricsResp || edgeClientMetricsResp) ? {
         data: {...edgeServerMetricsResp.data, ...edgeClientMetricsResp.data}
       } : null;
-      const topology = this.setTopologyMetrics({
+      const fieldTypes = this.setFieldTypes({
         nodes,
         calls,
         nodeMetrics: nodeMetricsResp ? {...nodeMetricsResp, config: nodeMetrics} : undefined,
         edgeMetrics: edgeMetricsResp ? {...edgeMetricsResp, config: edgeMetrics} : undefined,
       });
-      const {nodeFieldTypes, edgeFieldTypes} = this.setFieldTypes({
-        nodeMetrics: nodeMetricsResp ? {...nodeMetricsResp, config: nodeMetrics} : undefined,
-        edgeMetrics: edgeMetricsResp ? {...edgeMetricsResp, config: edgeMetrics} : undefined,
-      });
-      console.log(topology);
       const nodeFrame =  new MutableDataFrame({
         name: 'Nodes',
         refId: target.refId,
-        fields: [
-          { name: 'id', type: FieldType.string },
-          { name: 'title', type: FieldType.string },
-          ...nodeFieldTypes
-        ],
+        fields: fieldTypes.nodeFieldTypes,
         meta: {
           preferredVisualisationType: 'nodeGraph',
         }
@@ -132,22 +124,12 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       const edgeFrame =  new MutableDataFrame({
         name: 'Edges',
         refId: target.refId,
-        fields: [
-          { name: 'id', type: FieldType.string },
-          { name: 'source', type: FieldType.string },
-          { name: 'target', type: FieldType.string },
-          ...edgeFieldTypes,
-        ],
+        fields: fieldTypes.edgeFieldTypes,
         meta: {
           preferredVisualisationType: 'nodeGraph',
         }
       });
-      for (const node of topology.nodes) {
-        nodeFrame.add({...node, title: node.name});
-      }
-      for (const call of topology.calls) {
-        edgeFrame.add(call);
-      }
+
       return [nodeFrame, edgeFrame];
     });
 
@@ -203,67 +185,108 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       return {nodes, calls}
   }
 
-  setFieldTypes(params: {nodeMetrics: Recordable, edgeMetrics: Recordable}) {
+  setFieldTypes(params: {nodes: Node[], calls: Call[], nodeMetrics: Recordable, edgeMetrics: Recordable}) {
     const nodeMetrics = params.nodeMetrics || {config: [], data: {}};
     const edgeMetrics = params.edgeMetrics || {config: [], data: {}};
-    const nodeFieldTypes = this.getTypes(nodeMetrics);
-    const edgeFieldTypes = this.getTypes(edgeMetrics);
+    if (!(params.nodes && params.calls)) {
+      return {nodeFieldTypes: [], edgeFieldTypes: []};;
+    }
+    const nodeFieldTypes = this.getNodeTypes(params.nodes || [], nodeMetrics);
+    const edgeFieldTypes = this.getEdgeTypes(params.calls || [], edgeMetrics);
 
     return {nodeFieldTypes, edgeFieldTypes};
   }
 
-  getTypes(metrics: Recordable) {
-    const types = Object.keys(metrics.data).map((k: string, index: number) => {
+  getNodeTypes(nodes: Node[], metrics: Recordable) {
+    const idField = { name: NodeGraphDataFrameFieldNames.id, type: FieldType.string, values: new ArrayVector(), config: {}};
+    const titleField = { name: NodeGraphDataFrameFieldNames.title, type: FieldType.string, values: new ArrayVector(), config: {}};
+    const mainStatField = { name: NodeGraphDataFrameFieldNames.mainStat, type: FieldType.number, values: new ArrayVector(), config: {}};
+    const secondaryStatField = { name: NodeGraphDataFrameFieldNames.secondaryStat, type: FieldType.number, values: new ArrayVector(), config: {}};
+    const detailsFields: any = [];
+    for (const [index, k] of Object.keys(metrics.data).entries()) {
       const c = metrics.config.find((d: MetricData) => d.name === k) || {};
       const config = {displayName: c.label, unit: c.unit};
       if (index === 0) {
-        return { name: 'mainstat', type: FieldType.number, config};
+        mainStatField.config = config;
+      } else if (index === 1) {
+        secondaryStatField.config = config;
+      } else {
+        detailsFields.push({
+          name: `${NodeGraphDataFrameFieldNames.detail}${k}`,
+          type: FieldType.number,
+          values: new ArrayVector(),
+          config: {displayName: `${c.label || k } ${c.unit || ''}`}
+        });
       }
-      if (index === 1) {
-        return { name: 'secondarystat', type: FieldType.number, config};
+    }
+    for (const node of nodes) {
+      idField.values.add(node.id || '');
+      titleField.values.add(node.name);
+      for (let i = 0; i < metrics.config.length; i++) {
+        const item = metrics.config[i];
+        const m = (metrics.data[item.name].values).find((v: {id: string}) => v.id === node.id) || {isEmptyValue: true};
+        const value = m.isEmptyValue ? NaN : this.expression(Number(m.value), item.calculation);
+        if(i > 1) {
+          detailsFields[i - 2]?.values.add(Number(value));
+        } else {
+          if (i === 0) {
+            mainStatField.values.add(Number(value));
+          }
+          if (i === 1) {
+            secondaryStatField.values.add(Number(value));
+          }
+        }
       }
+    }
 
-      return { name: `detail__${k}`, type: FieldType.number, config: {displayName: c.label || k, unit: c.unit} };
-    });
-
-    return types;
+    return [idField, titleField, mainStatField, secondaryStatField, ...detailsFields];
   }
 
-  setTopologyMetrics(params: {nodes: Node[], calls: Call[], nodeMetrics: Recordable, edgeMetrics: Recordable}) {
-    const nodeMetrics = params.nodeMetrics || {config: [], data: {}};
-    const edgeMetrics = params.edgeMetrics || {config: [], data: {}};
-    const nodes = params.nodes.map((next: Node) => {
-      for (const [index, k] of Object.keys(nodeMetrics.data).entries()) {
-        const c = nodeMetrics.config.find((d: MetricData) => d.name === k) || {};
-        const m = (nodeMetrics.data[k].values).find((v: {id: string}) => v.id === next.id) || {isEmptyValue: true};
-        const value = m.isEmptyValue ? NaN : this.expression(Number(m.value), c.calculation);
-        if (index === 0) {
-          next.mainstat = value;
-        } else if (index === 1) {
-          next.secondarystat = value;
-        } else {
-          next[`detail__${k}`] = value;
-        }
+  getEdgeTypes(calls: Call[], metrics: Recordable) {
+    const idField = { name: NodeGraphDataFrameFieldNames.id, type: FieldType.string, values: new ArrayVector(), config: {}};
+    const targetField = { name: NodeGraphDataFrameFieldNames.target, type: FieldType.string, values: new ArrayVector(), config: {}};
+    const sourceField = { name: NodeGraphDataFrameFieldNames.source, type: FieldType.string, values: new ArrayVector(), config: {}};
+    const mainStatField = { name: NodeGraphDataFrameFieldNames.mainStat, type: FieldType.number, values: new ArrayVector(), config: {}};
+    const secondaryStatField = { name: NodeGraphDataFrameFieldNames.secondaryStat, type: FieldType.number, values: new ArrayVector(), config: {}};
+    const detailsFields: any = [];
+    for (const [index, k] of Object.keys(metrics.data).entries()) {
+      const c = metrics.config.find((d: MetricData) => d.name === k) || {};
+      const config = {displayName: c.label, unit: c.unit};
+      if (index === 0) {
+        mainStatField.config = config;
       }
-      return next;
-    })
-    const calls = params.calls.map((next: Call) => {
-      for (const [index, k] of Object.keys(edgeMetrics.data).entries()) {
-        const c = edgeMetrics.config.find((d: MetricData) => d.name === k) || {};
-        const m = (edgeMetrics.data[k].values).find((v: {id: string}) => v.id === next.id) || {value: NaN};
-        const value = m.isEmptyValue ? NaN : this.expression(Number(m.value), c.calculation);
-        if (index === 0) {
-          next.mainstat = value;
-        } else if (index === 1) {
-          next.secondarystat = value;
-        } else {
-          next[`detail__${k}`] = value;
-        }
+      else if (index === 1) {
+        secondaryStatField.config = config;
+      } else {
+        detailsFields.push({
+          name: `${NodeGraphDataFrameFieldNames.detail}${k}`,
+          type: FieldType.number,
+          values: new ArrayVector(),
+          config: {displayName: `${c.label || k } ${c.unit || ''}`}
+        });
       }
-      return next;
-    })
+    }
 
-    return {nodes, calls}
+    for (const call of calls) {
+      idField.values.add(call.id);
+      targetField.values.add(call.target);
+      sourceField.values.add(call.source);
+      for (let i = 0; i < metrics.config.length; i++) {
+        const item = metrics.config[i];
+        const m = (metrics.data[item.name].values).find((v: {id: string}) => v.id === call.id) || {isEmptyValue: true};
+        const value = m.isEmptyValue ? NaN : this.expression(Number(m.value), item.calculation);
+
+        if (i === 0) {
+          mainStatField.values.add(Number(value));
+        } else if (i === 1) {
+          secondaryStatField.values.add(Number(value));
+        } else {
+          detailsFields[i - 2]?.values.add(Number(value));
+        }
+      }
+    }
+
+    return [idField, targetField, sourceField, mainStatField, secondaryStatField, ...detailsFields];
   }
 
   expression(val: number, calculation: string): number | string {
