@@ -27,7 +27,15 @@ on:
       - main
 
 jobs:
-  build:
+  check-license:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Check License
+        uses: apache/skywalking-eyes@9bd5feb86b5817aa6072b008f9866a2c3bbc8587
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  yarn:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -60,3 +68,12 @@ jobs:
 
       - name: Stop grafana docker
         run: docker-compose down
+        env:
+            CI: true
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    needs: [yarn, check-license]
+    steps:
+      - name: To pass or not pass
+        run: echo "Just to make the GitHub merge button green"
