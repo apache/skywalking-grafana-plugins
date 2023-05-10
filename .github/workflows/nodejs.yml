@@ -73,7 +73,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 90
-    needs: [yarn]
+    needs: [yarn, check-license]
     steps:
       - name: To pass or not pass
         run: echo "Just to make the GitHub merge button green"
