@@ -1,8 +1,77 @@
 # Skywalking Grafana Plugins
 
-SkyWalking Grafana Plugins provides a support for SkyWalking. Add it as a data source, then you are ready to build dashboards or use Explore with SkyWalking to look at topology.
+SkyWalking Grafana Plugins provides a support for SkyWalking[https://skywalking.apache.org/]. Add it to Grafana as a data source, then you are ready to build dashboards or use Explore with SkyWalking to look at topology.
 
+## Configure the data source
 
+To configure basic settings for the data source, complete the following steps:
+
+1. Click Connections in the left-side menu.
+
+2. Under Your connections, click Data sources.
+
+3. Enter SkyWalking in the search bar.
+
+4. Select SkyWalking.
+
+The Settings tab of the data source is displayed.
+
+5. Set the data source’s basic configuration options:
+
+|Name|Description|
+|----|----|
+|Name|Sets the name you use to refer to the data source in panels and queries.|
+|URL|Sets the URL of the SkyWalking instance, such as http://skywalking.example.com/graphql.|
+
+## Node Graph
+
+1. Select the Dashboards tab.
+
+2. Select the Node Graph in the dashboard.
+
+5. Set the data source’s basic configuration options on the query tab:
+
+|Name|Example(Value)|Description|
+|----|----|----|
+|Layer|$layer|Current layer of services|
+|Service|$service|Current service|
+|Node Metrics|`[
+  {
+		"name": "service_cpm",
+      "label": "Load",
+      "unit": "cpm"
+	},
+  {
+		"name": "service_sla",
+      "calculation": "percentage",
+      "label": "Success Rate",
+      "unit": "%"
+	},
+  {
+		"name": "service_resp_time",
+      "label": "Latency",
+      "unit": "ms"
+	},
+  {
+		"name": "service_apdex",
+      "label": "Apdex",
+      "calculation": "apdex"
+	}
+  ]`|Supports multiple metrics|
+|Edge Metrics|`[
+  {
+    "name": "service_relation_server_cpm",
+    "label": "Client Load",
+    "unit": "cpm",
+    "type": "SERVER"
+  },
+  {
+    "name": "service_relation_client_cpm",
+    "label": "Client Load",
+    "unit": "cpm",
+    "type": "CLINET"
+  }
+]`|Only supports no more than two metrics|
 
 ## Getting started
 
