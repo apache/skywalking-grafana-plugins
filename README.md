@@ -1,5 +1,9 @@
 # Skywalking Grafana Plugins
 
+SkyWalking Grafana Plugins provides a support for SkyWalking. Add it as a data source, then you are ready to build dashboards or use Explore with SkyWalking to look at topology.
+
+
+
 ## Getting started
 
 1. Install dependencies
