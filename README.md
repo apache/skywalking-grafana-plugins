@@ -41,43 +41,8 @@ The Settings tab of the data source is displayed.
 |----|----|----|
 |Layer|$layer|Current layer of services|
 |Service|$service|Current service|
-|Node Metrics|`[
-  {
-		"name": "service_cpm",
-      "label": "Load",
-      "unit": "cpm"
-	},
-  {
-		"name": "service_sla",
-      "calculation": "percentage",
-      "label": "Success Rate",
-      "unit": "%"
-	},
-  {
-		"name": "service_resp_time",
-      "label": "Latency",
-      "unit": "ms"
-	},
-  {
-		"name": "service_apdex",
-      "label": "Apdex",
-      "calculation": "apdex"
-	}
-  ]`|Supports multiple metrics|
-|Edge Metrics|`[
-  {
-    "name": "service_relation_server_cpm",
-    "label": "Client Load",
-    "unit": "cpm",
-    "type": "SERVER"
-  },
-  {
-    "name": "service_relation_client_cpm",
-    "label": "Client Load",
-    "unit": "cpm",
-    "type": "CLINET"
-  }
-]`|Only supports no more than two metrics|
+|Node Metrics|`[{"name": "service_sla","calculation": "percentage""label": "Success Rate","unit": "%"}]`|Supports multiple metrics|
+|Edge Metrics|`[{"name": "service_relation_server_cpm","label": "Client Load", "unit": "cpm","type": "SERVER" // "SERVER" || "CLINET"}]`|Only supports no more than two metrics|
 
 ## Getting started
 
