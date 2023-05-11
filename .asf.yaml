@@ -16,7 +16,7 @@
 #
 
 github:
-  description: Apache SkyWalking grafana plugins
+  description: SkyWalking Grafana Plugins provides an extention to visualize telemetry data on Grafana.
   homepage: https://skywalking.apache.org/
   labels:
     - skywalking
