@@ -81,7 +81,7 @@ The Settings tab of the data source is displayed.
     "unit": "cpm",
     "type": "CLINET"
   }
-]`|Only supports no more than two metrics|
+]`|Only supports maximum two metrics|
 
 ## Getting started
 
