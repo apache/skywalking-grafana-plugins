@@ -2,7 +2,7 @@
 
 <img src="http://skywalking.apache.org/assets/logo.svg" alt="Sky Walking logo" height="90px" align="right" />
 
-SkyWalking Grafana Plugins provides an extention for [Apache SkyWalking](https://skywalking.apache.org/) visualizting telemetry data on Grafana. 
+SkyWalking Grafana Plugins provide extentions for [Apache SkyWalking](https://skywalking.apache.org/) visualizting telemetry data on Grafana. 
 
 Currently, SkyWalking supports [PromQL](https://skywalking.apache.org/docs/main/next/en/api/promql-service/) to establish [Grafana metrics dashboard](https://skywalking.apache.org/docs/main/next/en/setup/backend/ui-grafana/). 
 
