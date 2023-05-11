@@ -1,14 +1,16 @@
 # Skywalking Grafana Plugins
 
+<img src="http://skywalking.apache.org/assets/logo.svg" alt="Sky Walking logo" height="90px" align="right" />
+
 SkyWalking Grafana Plugins provides an extention for [Apache SkyWalking](https://skywalking.apache.org/) visualizting telemetry data on Grafana. 
 
-Currently, SkyWalking supports [PromQL](https://skywalking.apache.org/docs/main/next/en/api/promql-service/) to establish [Grafana metrics dashboard](https://skywalking.apache.org/docs/main/next/en/setup/backend/ui-grafana/). This plugin is focusing on more telemetry data, Service Map Topology.
+Currently, SkyWalking supports [PromQL](https://skywalking.apache.org/docs/main/next/en/api/promql-service/) to establish [Grafana metrics dashboard](https://skywalking.apache.org/docs/main/next/en/setup/backend/ui-grafana/). 
 
-This plugin provides a Grafana data source implementation.
+The plugins are focusing on visualizing more telemetry data, e.g. Service Map Topology, as a new Grafana data source implementation.
 
 ## Install the latest version of SkyWalking data source in your Grafana application
 
-* Require Grafana 9.5.1
+* Require Grafana 9.5.1+
 
 ```bash
 > grafana-cli plugins install skywalking-datasource
@@ -50,7 +52,18 @@ The Settings tab of the data source is displayed.
 |Node Metrics|`[{"name":"service_sla","calculation":"percentage","label":"Success Rate","unit":"%"}]`|Supports multiple metrics|
 |Edge Metrics|`[{"name":"service_relation_server_cpm","label":"Client Load","unit":"cpm","type":"SERVER"}]`|Only supports maximum two metrics|
 
-## Getting started
+# Contact Us
+* Mail list: **dev@skywalking.apache.org**. Mail to `dev-subscribe@skywalking.apache.org`, follow the reply to subscribe the mail list.
+* Send `Request to join SkyWalking slack` mail to the mail list(`dev@skywalking.apache.org`), we will invite you in.
+* Twitter, [ASFSkyWalking](https://twitter.com/AsfSkyWalking)
+* QQ Group: 901167865, 392443393
+* [bilibili B站 视频](https://space.bilibili.com/390683219)
+
+# License
+[Apache 2.0 License.](LICENSE)
+
+____
+## Build the plugin from the source codes and run locally
 
 1. Install dependencies
 
