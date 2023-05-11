@@ -1,5 +1,55 @@
 # Skywalking Grafana Plugins
 
+SkyWalking Grafana Plugins provides an extention for [Apache SkyWalking](https://skywalking.apache.org/) visualizting telemetry data on Grafana. 
+
+Currently, SkyWalking supports [PromQL](https://skywalking.apache.org/docs/main/next/en/api/promql-service/) to establish [Grafana metrics dashboard](https://skywalking.apache.org/docs/main/next/en/setup/backend/ui-grafana/). This plugin is focusing on more telemetry data, Service Map Topology.
+
+This plugin provides a Grafana data source implementation.
+
+## Install the latest version of SkyWalking data source in your Grafana application
+
+* Require Grafana 9.5.1
+
+```bash
+> grafana-cli plugins install skywalking-datasource
+```
+
+## Configure the data source
+
+To configure basic settings for the data source, complete the following steps:
+
+1. Click Connections in the left-side menu.
+
+2. Under Your connections, click Data sources.
+
+3. Enter SkyWalking in the search bar.
+
+4. Select SkyWalking.
+
+The Settings tab of the data source is displayed.
+
+5. Set the data source’s basic configuration options:
+
+|Name|Description|
+|----|----|
+|Name|Sets the name you use to refer to the data source in panels and queries.|
+|URL|Sets the URL of the SkyWalking instance, such as http://skywalking.example.com/graphql.|
+
+## Add Service Topology Graph
+
+1. Select the Dashboards tab.
+
+2. Select the Node Graph in the dashboard.
+
+5. Set the data source’s basic configuration options on the query tab:
+
+|Name|Example(Value)|Description|
+|----|----|----|
+|Layer|[$layer](https://skywalking.apache.org/docs/main/next/en/setup/backend/ui-grafana/#dashboards-settings)|Current layer of services|
+|Service|[$service](https://skywalking.apache.org/docs/main/next/en/setup/backend/ui-grafana/#dashboards-settings)|Current service|
+|Node Metrics|`[{"name":"service_sla","calculation":"percentage","label":"Success Rate","unit":"%"}]`|Supports multiple metrics|
+|Edge Metrics|`[{"name":"service_relation_server_cpm","label":"Client Load","unit":"cpm","type":"SERVER"}]`|Only supports maximum two metrics|
+
 ## Getting started
 
 1. Install dependencies

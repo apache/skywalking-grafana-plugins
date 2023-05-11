@@ -69,7 +69,7 @@ jobs:
       - name: Stop grafana docker
         run: docker-compose down
         env:
-            CI: true
+          CI: true
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 90
