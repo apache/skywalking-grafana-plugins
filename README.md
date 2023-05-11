@@ -33,7 +33,7 @@ The Settings tab of the data source is displayed.
 |Name|Sets the name you use to refer to the data source in panels and queries.|
 |URL|Sets the URL of the SkyWalking instance, such as http://skywalking.example.com/graphql.|
 
-## Node Graph
+## Add Service Topology Graph
 
 1. Select the Dashboards tab.
 
