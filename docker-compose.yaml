@@ -19,7 +19,7 @@ version: '3.0'
 
 services:
   grafana:
-    container_name: 'skywalking-skywalking-datasource'
+    container_name: 'skywalking-datasource'
     build:
       context: ./.config
       args:
@@ -27,5 +27,5 @@ services:
     ports:
       - 3000:3000/tcp
     volumes:
-      - ./dist:/var/lib/grafana/plugins/skywalking-skywalking-datasource
+      - ./dist:/var/lib/grafana/plugins/skywalking-datasource
       - ./provisioning:/etc/grafana/provisioning

@@ -9,7 +9,7 @@ This plugin provides a Grafana data source implementation.
 ## Install the latest version of SkyWalking data source in your Grafana application
 
 ```bash
-> grafana-cli plugins install skywalking-skywalking-datasource
+> grafana-cli plugins install skywalking-datasource
 ```
 
 ## Configure the data source
