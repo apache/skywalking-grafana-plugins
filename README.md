@@ -1,12 +1,16 @@
 # Skywalking Grafana Plugins
 
-SkyWalking Grafana Plugins provides a support for [Apache SkyWalking](https://skywalking.apache.org/). Add it to Grafana as a data source, then you are ready to build dashboards with SkyWalking to look at Topology. This topic explains configuration and queries specific to the SkyWalking data source.
+SkyWalking Grafana Plugins provides an extention for [Apache SkyWalking](https://skywalking.apache.org/) visualizting telemetry data on Grafana. 
+
+Currently, SkyWalking supports [PromQL](https://skywalking.apache.org/docs/main/next/en/api/promql-service/) to establish [Grafana metrics dashboard](https://skywalking.apache.org/docs/main/next/en/setup/backend/ui-grafana/). This plugin is focusing on more telemetry data, Service Map Topology.
+
+This plugin provides a Grafana data source implementation.
 
 ## Install the latest version of SkyWalking data source in your Grafana application
 
-   ```bash
-   grafana-cli plugins install skywalking-skywalking-datasource
-   ```
+```bash
+> grafana-cli plugins install skywalking-skywalking-datasource
+```
 
 ## Configure the data source
 
@@ -29,7 +33,7 @@ The Settings tab of the data source is displayed.
 |Name|Sets the name you use to refer to the data source in panels and queries.|
 |URL|Sets the URL of the SkyWalking instance, such as http://skywalking.example.com/graphql.|
 
-## Node Graph
+## Add Service Topology Graph
 
 1. Select the Dashboards tab.
 
