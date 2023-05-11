@@ -45,8 +45,8 @@ The Settings tab of the data source is displayed.
 
 |Name|Example(Value)|Description|
 |----|----|----|
-|Layer|$layer|Current layer of services|
-|Service|$service|Current service|
+|Layer|[$layer](https://skywalking.apache.org/docs/main/next/en/setup/backend/ui-grafana/#dashboards-settings)|Current layer of services|
+|Service|[$service](https://skywalking.apache.org/docs/main/next/en/setup/backend/ui-grafana/#dashboards-settings)|Current service|
 |Node Metrics|`[{"name":"service_sla","calculation":"percentage","label":"Success Rate","unit":"%"}]`|Supports multiple metrics|
 |Edge Metrics|`[{"name":"service_relation_server_cpm","label":"Client Load","unit":"cpm","type":"SERVER"}]`|Only supports maximum two metrics|
 
