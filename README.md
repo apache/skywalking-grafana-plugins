@@ -1,6 +1,6 @@
 # Skywalking Grafana Plugins
 
-SkyWalking Grafana Plugins provides a support for [Apache SkyWalking](https://skywalking.apache.org/). Add it to Grafana as a data source, then you are ready to build dashboards or use Explore with SkyWalking to look at topology.
+SkyWalking Grafana Plugins provides a support for [Apache SkyWalking](https://skywalking.apache.org/). Add it to Grafana as a data source, then you are ready to build dashboards with SkyWalking to look at Topology. This topic explains configuration and queries specific to the SkyWalking data source.
 
 ## Install the latest version of SkyWalking data source in your Grafana application
 
