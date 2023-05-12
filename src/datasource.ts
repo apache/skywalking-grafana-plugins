@@ -236,7 +236,6 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         });
       }
     }
-
     for (const node of nodes) {
       idField.values.add(node.id || '');
       titleField.values.add(node.name);
@@ -267,7 +266,6 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     const mainStatField = { name: NodeGraphDataFrameFieldNames.mainStat, type: FieldType.number, values: new ArrayVector(), config: {}};
     const secondaryStatField = { name: NodeGraphDataFrameFieldNames.secondaryStat, type: FieldType.number, values: new ArrayVector(), config: {}};
     const detailsFields: any = [];
-
     for (const [index, k] of Object.keys(metrics.data).entries()) {
       const c = metrics.config.find((d: MetricData) => d.name === k) || {};
       const config = {displayName: c.label, unit: c.unit};
