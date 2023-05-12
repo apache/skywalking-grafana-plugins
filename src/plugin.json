@@ -26,7 +26,13 @@
   "routes": [
     {
       "path": "graphql",
-      "url": "{{ .JsonData.URL }}"
+      "url": "{{ .JsonData.URL }}",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "content": "application/json"
+        }
+      ]
     }
   ]
 }
