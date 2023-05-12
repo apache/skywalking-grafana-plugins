@@ -66,3 +66,7 @@ export const EdgeMetrics = `{
   "unit": "cpm",
   "type": "CLINET"
 }`
+export const AuthenticationType = [
+  {label: 'BASIC', value: 'BASIC', text: 'BASIC'},
+  {label: 'None', value: 'NONE', text: 'None'},
+]

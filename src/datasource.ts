@@ -41,14 +41,18 @@ import {
   Node,
   Recordable
 } from './types';
-import { Fragments, RoutePath, TimeType, Calculations } from "./constant";
+import { Fragments, RoutePath, TimeType, Calculations, AuthenticationType } from "./constant";
 
 export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   URL: string;
+  type: string;
+  basicAuth: string
   constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
     super(instanceSettings);
     // proxy url
     this.URL = instanceSettings.url || '';
+    this.type = instanceSettings.jsonData.type || '';
+    this.basicAuth = instanceSettings.jsonData.basicAuth || '';
     dayjs.extend(utc)
     dayjs.extend(timezone)
   }
@@ -156,7 +160,14 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   async doRequest(params?: Recordable) {
     // Do the request on proxy; the server will replace url + routePath with the url
     // defined in plugin.json
-    const result = getBackendSrv().post(`${this.URL}${RoutePath}`, params);
+    let headers =  {};
+
+    if (this.type === AuthenticationType[0].value) {
+      headers = {
+        'Authorization': `Basic ${this.basicAuth}`, // 'Basic c2t5d2Fsa2luZzpza3l3YWxraW5n'
+      };
+    }
+    const result = getBackendSrv().post(`${this.URL}${RoutePath}`, params, {headers});
 
     return result;
   }

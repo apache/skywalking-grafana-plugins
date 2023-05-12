@@ -34,7 +34,8 @@ export interface MyDataSourceOptions extends DataSourceJsonData {
   URL: string;
   username: string;
   password: string;
-  apiKey: string;
+  basicAuth: string;
+  type: string;
 }
 
 /**

@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 import React, { ChangeEvent } from 'react';
-import { InlineField, Input } from '@grafana/ui';
+import { InlineField, Input, Select } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { MyDataSourceOptions } from '../types';
+import {AuthenticationType} from "../constant";
 
 interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions> {}
 
@@ -33,14 +34,26 @@ export function ConfigEditor(props: Props) {
     onOptionsChange({ ...options, jsonData });
   };
 
+  const onTypeChange = (v: any) => {
+    const { onOptionsChange, options } = props;
+    const jsonData = {
+      ...options.jsonData,
+      type: v.value,
+      username: v.value === AuthenticationType[1].value ? '' : options.jsonData.username,
+      password: v.value === AuthenticationType[1].value ? '' : options.jsonData.password,
+    };
+    onOptionsChange({ ...options, jsonData });
+  };
+
   const onUserChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { onOptionsChange, options } = props;
-    const apiKey = btoa(encodeURI(`${event.target.value}:${options.jsonData.password}`));
+    const basicAuth = btoa(encodeURI(`${event.target.value}:${options.jsonData.password}`));
     const jsonData = {
       ...options.jsonData,
       username: event.target.value,
-      apiKey,
+      basicAuth,
     };
+
     onOptionsChange({ 
       ...options,
       jsonData,
@@ -49,11 +62,11 @@ export function ConfigEditor(props: Props) {
 
   const onPasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { onOptionsChange, options } = props;
-    const apiKey = btoa(encodeURI(`${options.jsonData.username}:${event.target.value}`));
+    const basicAuth = btoa(encodeURI(`${options.jsonData.username}:${event.target.value}`));
     const jsonData = {
       ...options.jsonData,
       password: event.target.value,
-      apiKey,
+      basicAuth,
     };
     onOptionsChange({ 
       ...options,
@@ -65,7 +78,7 @@ export function ConfigEditor(props: Props) {
 
   return (
     <div className="gf-form-group">
-      <InlineField label="URL" labelWidth={12}>
+      <InlineField label="URL" labelWidth={18}>
         <Input
           onChange={onURLChange}
           value={jsonData.URL || ''}
@@ -73,7 +86,19 @@ export function ConfigEditor(props: Props) {
           width={40}
         />
       </InlineField>
-      <InlineField label="User Name" labelWidth={12}>
+      <InlineField label="Authentication Type" labelWidth={18} >
+        <Select
+          options={AuthenticationType}
+          value={jsonData.type || AuthenticationType[1].value}
+          onChange={onTypeChange}
+          width={40}
+          placeholder="Choose an authentication type"
+          menuPlacement="bottom"
+        />
+      </InlineField>
+      {jsonData.type === AuthenticationType[0].value &&
+      <div>
+        <InlineField label="User Name" labelWidth={18}>
         <Input
           onChange={onUserChange}
           value={jsonData.username || ''}
@@ -81,7 +106,7 @@ export function ConfigEditor(props: Props) {
           width={40}
         />
       </InlineField>
-      <InlineField label="Password" labelWidth={12}>
+      <InlineField label="Password" labelWidth={18}>
         <Input
           onChange={onPasswordChange}
           value={jsonData.password || ''}
@@ -90,6 +115,7 @@ export function ConfigEditor(props: Props) {
           type="password"
         />
       </InlineField>
+    </div>}
     </div>
   );
 }

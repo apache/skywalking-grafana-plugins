@@ -29,10 +29,6 @@
       "url": "{{ .JsonData.URL }}",
       "headers": [
         {
-          "name": "Authorization",
-          "content": "Basic {{ .JsonData.apiKey }}"
-        },
-        {
           "name": "Content-Type",
           "content": "application/json"
         }
