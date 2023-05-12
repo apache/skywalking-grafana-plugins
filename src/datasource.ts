@@ -122,7 +122,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       const edgeServerMetricsResp = serverMetrics.length && idsS.length ? await this.queryMetrics(serverMetrics, idsS, duration) : null;
       const edgeClientMetricsResp = clientMetrics.length && idsC.length ? await this.queryMetrics(clientMetrics, idsC, duration) : null;
       const edgeMetricsResp: any = (edgeServerMetricsResp || edgeClientMetricsResp) ? {
-        data: {...edgeServerMetricsResp.data, ...edgeClientMetricsResp.data}
+        data: {...(edgeServerMetricsResp && edgeServerMetricsResp.data || {}), ...(edgeClientMetricsResp && edgeClientMetricsResp.data || {})}
       } : null;
       const fieldTypes = this.setFieldTypes({
         nodes,
@@ -267,14 +267,22 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     const mainStatField = { name: NodeGraphDataFrameFieldNames.mainStat, type: FieldType.number, values: new ArrayVector(), config: {}};
     const secondaryStatField = { name: NodeGraphDataFrameFieldNames.secondaryStat, type: FieldType.number, values: new ArrayVector(), config: {}};
     const detailsFields: any = [];
+
     for (const [index, k] of Object.keys(metrics.data).entries()) {
       const c = metrics.config.find((d: MetricData) => d.name === k) || {};
       const config = {displayName: c.label, unit: c.unit};
       if (index === 0) {
         mainStatField.config = config;
       }
-      if (index === 1) {
+      else if (index === 1) {
         secondaryStatField.config = config;
+      } else {
+        detailsFields.push({
+          name: `${NodeGraphDataFrameFieldNames.detail}${k}`,
+          type: FieldType.number,
+          values: new ArrayVector(),
+          config: {displayName: `${c.label || k } ${c.unit || ''}`}
+        });
       }
     }
     for (const call of calls) {
@@ -288,9 +296,10 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
 
         if (i === 0) {
           mainStatField.values.add(Number(value));
-        }
-        if (i === 1) {
+        } else if (i === 1) {
           secondaryStatField.values.add(Number(value));
+        } else {
+          detailsFields[i - 2]?.values.add(Number(value));
         }
       }
     }
