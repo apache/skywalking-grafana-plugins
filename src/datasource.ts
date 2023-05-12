@@ -126,7 +126,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       const edgeServerMetricsResp = serverMetrics.length && idsS.length ? await this.queryMetrics(serverMetrics, idsS, duration) : null;
       const edgeClientMetricsResp = clientMetrics.length && idsC.length ? await this.queryMetrics(clientMetrics, idsC, duration) : null;
       const edgeMetricsResp: any = (edgeServerMetricsResp || edgeClientMetricsResp) ? {
-        data: {...edgeServerMetricsResp.data, ...edgeClientMetricsResp.data}
+        data: {...(edgeServerMetricsResp && edgeServerMetricsResp.data || {}), ...(edgeClientMetricsResp && edgeClientMetricsResp.data || {})}
       } : null;
       const fieldTypes = this.setFieldTypes({
         nodes,
@@ -291,7 +291,6 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         });
       }
     }
-
     for (const call of calls) {
       idField.values.add(call.id);
       targetField.values.add(call.target);
