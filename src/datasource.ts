@@ -156,10 +156,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   async doRequest(params?: Recordable) {
     // Do the request on proxy; the server will replace url + routePath with the url
     // defined in plugin.json
-    const result = getBackendSrv().post(`${this.URL}${RoutePath}`, params, { headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Basic c2t5d2Fsa2luZzpza3l3YWxraW5n',
-    } });
+    const result = getBackendSrv().post(`${this.URL}${RoutePath}`, params);
 
     return result;
   }

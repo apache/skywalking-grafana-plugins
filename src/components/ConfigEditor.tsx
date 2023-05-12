@@ -15,45 +15,14 @@
  * limitations under the License.
  */
 import React, { ChangeEvent } from 'react';
-import { InlineField, Input, SecretInput } from '@grafana/ui';
+import { InlineField, Input } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { MyDataSourceOptions, MySecureJsonData } from '../types';
+import { MyDataSourceOptions } from '../types';
 
 interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions> {}
 
 export function ConfigEditor(props: Props) {
-  const { onOptionsChange, options } = props;
-  const onPathChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const jsonData = {
-      ...options.jsonData,
-      path: event.target.value,
-    };
-    onOptionsChange({ ...options, jsonData });
-  };
-
-  // Secure field (only sent to the backend)
-  const onAPIKeyChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onOptionsChange({
-      ...options,
-      secureJsonData: {
-        apiKey: event.target.value,
-      },
-    });
-  };
-
-  const onResetAPIKey = () => {
-    onOptionsChange({
-      ...options,
-      secureJsonFields: {
-        ...options.secureJsonFields,
-        apiKey: false,
-      },
-      secureJsonData: {
-        ...options.secureJsonData,
-        apiKey: '',
-      },
-    });
-  };
+  const { options } = props;
 
   const onURLChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { onOptionsChange, options } = props;
@@ -64,8 +33,35 @@ export function ConfigEditor(props: Props) {
     onOptionsChange({ ...options, jsonData });
   };
 
-  const { jsonData, secureJsonFields } = options;
-  const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
+  const onUserChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { onOptionsChange, options } = props;
+    const apiKey = btoa(encodeURI(`${event.target.value}:${options.jsonData.password}`));
+    const jsonData = {
+      ...options.jsonData,
+      username: event.target.value,
+      apiKey,
+    };
+    onOptionsChange({ 
+      ...options,
+      jsonData,
+    });
+  };
+
+  const onPasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { onOptionsChange, options } = props;
+    const apiKey = btoa(encodeURI(`${options.jsonData.username}:${event.target.value}`));
+    const jsonData = {
+      ...options.jsonData,
+      password: event.target.value,
+      apiKey,
+    };
+    onOptionsChange({ 
+      ...options,
+      jsonData,
+    });
+  };
+
+  const { jsonData } = options;
 
   return (
     <div className="gf-form-group">
@@ -77,22 +73,21 @@ export function ConfigEditor(props: Props) {
           width={40}
         />
       </InlineField>
-      <InlineField label="Path" labelWidth={12}>
+      <InlineField label="User Name" labelWidth={12}>
         <Input
-          onChange={onPathChange}
-          value={jsonData.path || ''}
-          placeholder="json field returned to frontend"
+          onChange={onUserChange}
+          value={jsonData.username || ''}
+          placeholder="Please input username"
           width={40}
         />
       </InlineField>
-      <InlineField label="API Key" labelWidth={12}>
-        <SecretInput
-          isConfigured={(secureJsonFields && secureJsonFields.apiKey) as boolean}
-          value={secureJsonData.apiKey || ''}
-          placeholder="secure json field (backend only)"
+      <InlineField label="Password" labelWidth={12}>
+        <Input
+          onChange={onPasswordChange}
+          value={jsonData.password || ''}
+          placeholder="Please input password"
           width={40}
-          onReset={onResetAPIKey}
-          onChange={onAPIKeyChange}
+          type="password"
         />
       </InlineField>
     </div>
