@@ -236,6 +236,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         });
       }
     }
+
     for (const node of nodes) {
       idField.values.add(node.id || '');
       titleField.values.add(node.name);
@@ -272,18 +273,10 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       if (index === 0) {
         mainStatField.config = config;
       }
-      else if (index === 1) {
+      if (index === 1) {
         secondaryStatField.config = config;
-      } else {
-        detailsFields.push({
-          name: `${NodeGraphDataFrameFieldNames.detail}${k}`,
-          type: FieldType.number,
-          values: new ArrayVector(),
-          config: {displayName: `${c.label || k } ${c.unit || ''}`}
-        });
       }
     }
-
     for (const call of calls) {
       idField.values.add(call.id);
       targetField.values.add(call.target);
@@ -295,10 +288,9 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
 
         if (i === 0) {
           mainStatField.values.add(Number(value));
-        } else if (i === 1) {
+        }
+        if (i === 1) {
           secondaryStatField.values.add(Number(value));
-        } else {
-          detailsFields[i - 2]?.values.add(Number(value));
         }
       }
     }
