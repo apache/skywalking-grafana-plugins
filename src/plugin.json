@@ -30,7 +30,7 @@
       "headers": [
         {
           "name": "Authorization",
-          "content": "{{ .SecureJsonData.basicAuth }}"
+          "content": "{{ .JsonData.basicAuth }}"
         },
         {
           "name": "Content-Type",

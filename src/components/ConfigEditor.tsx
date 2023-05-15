@@ -38,40 +38,36 @@ export function ConfigEditor(props: Props) {
     const jsonData = {
       ...options.jsonData,
       type: v.value,
-      username: v.value === AuthenticationType[0].value ? options.jsonData.username : '',
-    };
-    let secureJson = {
+      username: '',
       basicAuth: '',
-      password: '',
     };
+    
     if (v.value === AuthenticationType[0].value) {
-      secureJson = {
-        basicAuth: secureJsonData.basicAuth,
-        password: secureJsonData.password,
-      };
+      secureJsonData.password = secureJsonData.password;
+      jsonData.username = options.jsonData.username;
+      jsonData.basicAuth = options.jsonData.basicAuth;
     }
-    const p = { 
+    const p = {
       ...options,
       jsonData,
-      secureJsonData: secureJson,
-    }
+      secureJsonData,
+    };
     onOptionsChange(p);
   };
 
   const onUserChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
-    const basicAuth = `Basic ${btoa(encodeURI(`${event.target.value}:${secureJsonData.password}`))}`;
+    const d = options.jsonData.basicAuth && options.jsonData.basicAuth.split('Basic ')[1] || '';
+    const password = d && atob(d).split(':')[1] || '';
+    const basicAuth = `Basic ${btoa(encodeURI(`${event.target.value}:${password}`))}`;
     const jsonData = {
       ...options.jsonData,
       username: event.target.value,
+      basicAuth,
     };
 
-    onOptionsChange({ 
+    onOptionsChange({
       ...options,
       jsonData,
-      secureJsonData: {
-        basicAuth,
-      }
     });
   };
 
@@ -79,29 +75,31 @@ export function ConfigEditor(props: Props) {
     const basicAuth = `Basic ${btoa(encodeURI(`${options.jsonData.username}:${event.target.value}`))}`;
     const jsonData = {
       ...options.jsonData,
+      basicAuth,
     };
 
-    onOptionsChange({ 
+    onOptionsChange({
       ...options,
       jsonData,
       secureJsonData: {
         password: event.target.value,
-        basicAuth,
       }
     });
   };
 
-  const onResetAPIKey = () => {
+  const onResetPassword = () => {
     onOptionsChange({
       ...options,
+      jsonData: {
+        ...options.jsonData,
+        basicAuth: '',
+      },
       secureJsonFields: {
         ...options.secureJsonFields,
-        basicAuth: false,
         password: false,
       },
       secureJsonData: {
         ...options.secureJsonData,
-        basicAuth: '',
         password: '',
       },
     });
@@ -147,7 +145,7 @@ export function ConfigEditor(props: Props) {
           value={secureJsonData.password || ''}
           placeholder="secure password field (backend only)"
           width={40}
-          onReset={onResetAPIKey}
+          onReset={onResetPassword}
           onChange={onPasswordChange}
         />
       </InlineField>
