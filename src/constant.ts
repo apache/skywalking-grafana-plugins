@@ -18,6 +18,7 @@
 export const Fragments = {
   servicesTopolgy: "query queryData($serviceIds: [ID!]!, $duration: Duration!) {\n  topology: getServicesTopology(serviceIds: $serviceIds, duration: $duration) {\n    nodes {\n      id\n      name\n      type\n      isReal\n    }\n    calls {\n      id\n      source\n      detectPoints\n      target\n    }\n  }}",
   services: "query queryServices($duration: Duration!,$keyword: String!) {\n    services: getAllServices(duration: $duration, group: $keyword) {\n      id\n      name\n      group\n      layers\n    }\n  }",
+  version: "query version { version }",
 };
 
 // proxy route

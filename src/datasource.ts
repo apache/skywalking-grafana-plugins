@@ -442,9 +442,44 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
   async testDatasource() {
     // Implement a health check for your data source.
-    return {
-      status: 'success',
-      message: 'Success',
-    };
+    const defaultErrorMessage = 'Cannot connect to API';
+    try {
+      const  v =  {
+        query: Fragments.version,
+        variables: {},
+      };
+      const resp = await this.doRequest(v);
+    
+      if (resp.data && resp.data.version !== undefined) {
+        return {
+          status: 'success',
+          message: 'Success',
+        };
+      } else {
+        return {
+          status: 'error',
+          message: resp.statusText ? resp.statusText : defaultErrorMessage,
+        };
+      }
+    } catch(err: any) {
+      const toString = Object.prototype.toString;
+      if (toString.call(err) === `[object String]`) {
+        return {
+          status: 'error',
+          message: err,
+        };
+      } else {
+        let message = '';
+        message += err.statusText ? err.statusText : defaultErrorMessage;
+        if (err.data && err.data.error && err.data.error.code) {
+          message += ': ' + err.data.error.code + '. ' + err.data.error.message;
+        }
+
+        return {
+          status: 'error',
+          message,
+        };
+      }
+    }
   }
 }
