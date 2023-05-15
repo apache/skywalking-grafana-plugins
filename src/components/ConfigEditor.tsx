@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 import React, { ChangeEvent } from 'react';
-import { InlineField, Input, Select } from '@grafana/ui';
+import { InlineField, SecretInput, Select, Input } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { MyDataSourceOptions, MySecureJsonData } from '../types';
 import { AuthenticationType } from "../constant";
@@ -24,7 +24,6 @@ interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions> 
 
 export function ConfigEditor(props: Props) {
   const { options, onOptionsChange } = props;
-  const { jsonData } = options;
 
   const onURLChange = (event: ChangeEvent<HTMLInputElement>) => {
     const jsonData = {
@@ -81,7 +80,7 @@ export function ConfigEditor(props: Props) {
     const jsonData = {
       ...options.jsonData,
     };
-    console.log(basicAuth);
+
     onOptionsChange({ 
       ...options,
       jsonData,
@@ -109,6 +108,7 @@ export function ConfigEditor(props: Props) {
   };
 
   const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
+  const { secureJsonFields, jsonData } = options;
 
   return (
     <div className="gf-form-group">
@@ -141,10 +141,11 @@ export function ConfigEditor(props: Props) {
         />
       </InlineField>
       <InlineField label="Password" labelWidth={18}>
-        <Input
+        <SecretInput
+          isConfigured={(secureJsonFields && secureJsonFields.password) as boolean}
           type="password"
           value={secureJsonData.password || ''}
-          placeholder="secure json field (backend only)"
+          placeholder="secure password field (backend only)"
           width={40}
           onReset={onResetAPIKey}
           onChange={onPasswordChange}
