@@ -29,6 +29,10 @@
       "url": "{{ .JsonData.URL }}",
       "headers": [
         {
+          "name": "Authorization",
+          "content": "{{ .SecureJsonData.basicAuth }}"
+        },
+        {
           "name": "Content-Type",
           "content": "application/json"
         }

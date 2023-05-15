@@ -27,9 +27,9 @@ import {
   NodeGraphDataFrameFieldNames,
 } from '@grafana/data';
 import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
-import dayjs from "dayjs";
-import timezone from "dayjs/plugin/timezone";
-import utc from "dayjs/plugin/utc";
+import dayjs from 'dayjs';
+import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
 
 import {
   MyQuery,
@@ -41,18 +41,14 @@ import {
   Node,
   Recordable
 } from './types';
-import { Fragments, RoutePath, TimeType, Calculations, AuthenticationType } from "./constant";
+import { Fragments, RoutePath, TimeType, Calculations } from './constant';
 
 export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   URL: string;
-  type: string;
-  basicAuth: string
   constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
     super(instanceSettings);
     // proxy url
     this.URL = instanceSettings.url || '';
-    this.type = instanceSettings.jsonData.type || '';
-    this.basicAuth = instanceSettings.jsonData.basicAuth || '';
     dayjs.extend(utc)
     dayjs.extend(timezone)
   }
@@ -63,7 +59,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     const to = range!.to.valueOf();
     let utc = -(new Date().getTimezoneOffset() / 60);
 
-    if (options.timezone !== "browser") {
+    if (options.timezone !== 'browser') {
       utc = dayjs().tz(options.timezone).utcOffset() / 60;
     }
     const dates = this.timeFormat([this.getLocalTime(utc, new Date(from)), this.getLocalTime(utc, new Date(to))]);
@@ -87,7 +83,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       // fetch services from api
       const  s =  {
         query: Fragments.services,
-        variables: {duration, keyword: ""},
+        variables: {duration, keyword: ''},
       };
       const resp = await this.doRequest(s);
       services = resp.data.services || [];
@@ -109,8 +105,8 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       // fetch topology data from api
       const res = await this.doRequest(t);
       const {nodes, calls} = this.setTopologyData({nodes: res.data.topology.nodes || [],  calls: res.data.topology.calls || []});
-      const idsS = calls.filter((i: Call) => i.detectPoints.includes("SERVER")).map((b: Call) => b.id);
-      const idsC = calls.filter((i: Call) => i.detectPoints.includes("CLIENT")).map((b: Call) => b.id);
+      const idsS = calls.filter((i: Call) => i.detectPoints.includes('SERVER')).map((b: Call) => b.id);
+      const idsC = calls.filter((i: Call) => i.detectPoints.includes('CLIENT')).map((b: Call) => b.id);
       const serverMetrics = [];
       const clientMetrics = [];
       for (const m of edgeMetrics) {
@@ -160,14 +156,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   async doRequest(params?: Recordable) {
     // Do the request on proxy; the server will replace url + routePath with the url
     // defined in plugin.json
-    let headers =  {};
-
-    if (this.type === AuthenticationType[0].value) {
-      headers = {
-        'Authorization': `Basic ${this.basicAuth}`, // 'Basic c2t5d2Fsa2luZzpza3l3YWxraW5n'
-      };
-    }
-    const result = getBackendSrv().post(`${this.URL}${RoutePath}`, params, {headers});
+    const result = getBackendSrv().post(`${this.URL}${RoutePath}`, params);
 
     return result;
   }
@@ -336,10 +325,10 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         data = (val / 10000).toFixed(2);
         break;
       case Calculations.ConvertSeconds:
-        data = dayjs(val * 1000).format("YYYY-MM-DD HH:mm:ss");
+        data = dayjs(val * 1000).format('YYYY-MM-DD HH:mm:ss');
         break;
       case Calculations.ConvertMilliseconds:
-        data = dayjs(val).format("YYYY-MM-DD HH:mm:ss");
+        data = dayjs(val).format('YYYY-MM-DD HH:mm:ss');
         break;
       case Calculations.MsToS:
         data = (val / 1000).toFixed(2);
@@ -406,7 +395,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     if (monthTemp < 10) {
       month = `0${monthTemp}`;
     }
-    if (step === "MONTH" && monthDayDiff) {
+    if (step === 'MONTH' && monthDayDiff) {
       return `${year}-${month}`;
     }
     const dayTemp = date.getDate();
@@ -414,7 +403,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     if (dayTemp < 10) {
       day = `0${dayTemp}`;
     }
-    if (step === "DAY" || step === "MONTH") {
+    if (step === 'DAY' || step === 'MONTH') {
       return `${year}-${month}-${day}`;
     }
     const hourTemp = date.getHours();
@@ -422,7 +411,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     if (hourTemp < 10) {
       hour = `0${hourTemp}`;
     }
-    if (step === "HOUR") {
+    if (step === 'HOUR') {
       return `${year}-${month}-${day} ${hour}`;
     }
     const minuteTemp = date.getMinutes();
@@ -430,7 +419,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     if (minuteTemp < 10) {
       minute = `0${minuteTemp}`;
     }
-    if (step === "MINUTE") {
+    if (step === 'MINUTE') {
       return `${year}-${month}-${day} ${hour}${minute}`;
     }
     const secondTemp = date.getSeconds();
@@ -438,10 +427,10 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     if (secondTemp < 10) {
       second = `0${secondTemp}`;
     }
-    if (step === "SECOND") {
+    if (step === 'SECOND') {
       return `${year}-${month}-${day} ${hour}${minute}${second}`;
     }
-    return "";
+    return '';
   }
   getLocalTime(utc: number, time: Date): Date {
     const d = new Date(time);

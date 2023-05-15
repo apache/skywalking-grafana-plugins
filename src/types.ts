@@ -34,8 +34,6 @@ export interface MyDataSourceOptions extends DataSourceJsonData {
   path?: string;
   URL: string;
   username: string;
-  password: string;
-  basicAuth: string;
   type: string;
 }
 
@@ -43,7 +41,8 @@ export interface MyDataSourceOptions extends DataSourceJsonData {
  * Value that is used in the backend, but never sent over HTTP to the frontend
  */
 export interface MySecureJsonData {
-  apiKey?: string;
+  password: string;
+  basicAuth: string;
 }
 
 export type DurationTime = {

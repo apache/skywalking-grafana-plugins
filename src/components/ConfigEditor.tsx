@@ -17,16 +17,16 @@
 import React, { ChangeEvent } from 'react';
 import { InlineField, Input, Select } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { MyDataSourceOptions } from '../types';
-import {AuthenticationType} from "../constant";
+import { MyDataSourceOptions, MySecureJsonData } from '../types';
+import { AuthenticationType } from "../constant";
 
 interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions> {}
 
 export function ConfigEditor(props: Props) {
-  const { options } = props;
+  const { options, onOptionsChange } = props;
+  const { jsonData } = options;
 
   const onURLChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onOptionsChange, options } = props;
     const jsonData = {
       ...options.jsonData,
       URL: event.target.value,
@@ -35,46 +35,80 @@ export function ConfigEditor(props: Props) {
   };
 
   const onTypeChange = (v: any) => {
-    const { onOptionsChange, options } = props;
+    const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
     const jsonData = {
       ...options.jsonData,
       type: v.value,
-      username: v.value === AuthenticationType[1].value ? '' : options.jsonData.username,
-      password: v.value === AuthenticationType[1].value ? '' : options.jsonData.password,
+      username: v.value === AuthenticationType[0].value ? options.jsonData.username : '',
     };
-    onOptionsChange({ ...options, jsonData });
+    let secureJson = {
+      basicAuth: '',
+      password: '',
+    };
+    if (v.value === AuthenticationType[0].value) {
+      secureJson = {
+        basicAuth: secureJsonData.basicAuth,
+        password: secureJsonData.password,
+      };
+    }
+    const p = { 
+      ...options,
+      jsonData,
+      secureJsonData: secureJson,
+    }
+    onOptionsChange(p);
   };
 
   const onUserChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onOptionsChange, options } = props;
-    const basicAuth = btoa(encodeURI(`${event.target.value}:${options.jsonData.password}`));
+    const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
+    const basicAuth = `Basic ${btoa(encodeURI(`${event.target.value}:${secureJsonData.password}`))}`;
     const jsonData = {
       ...options.jsonData,
       username: event.target.value,
-      basicAuth,
     };
 
     onOptionsChange({ 
       ...options,
       jsonData,
+      secureJsonData: {
+        basicAuth,
+      }
     });
   };
 
   const onPasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onOptionsChange, options } = props;
-    const basicAuth = btoa(encodeURI(`${options.jsonData.username}:${event.target.value}`));
+    const basicAuth = `Basic ${btoa(encodeURI(`${options.jsonData.username}:${event.target.value}`))}`;
     const jsonData = {
       ...options.jsonData,
-      password: event.target.value,
-      basicAuth,
     };
+    console.log(basicAuth);
     onOptionsChange({ 
       ...options,
       jsonData,
+      secureJsonData: {
+        password: event.target.value,
+        basicAuth,
+      }
     });
   };
 
-  const { jsonData } = options;
+  const onResetAPIKey = () => {
+    onOptionsChange({
+      ...options,
+      secureJsonFields: {
+        ...options.secureJsonFields,
+        basicAuth: false,
+        password: false,
+      },
+      secureJsonData: {
+        ...options.secureJsonData,
+        basicAuth: '',
+        password: '',
+      },
+    });
+  };
+
+  const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
 
   return (
     <div className="gf-form-group">
@@ -108,11 +142,12 @@ export function ConfigEditor(props: Props) {
       </InlineField>
       <InlineField label="Password" labelWidth={18}>
         <Input
-          onChange={onPasswordChange}
-          value={jsonData.password || ''}
-          placeholder="Please input password"
-          width={40}
           type="password"
+          value={secureJsonData.password || ''}
+          placeholder="secure json field (backend only)"
+          width={40}
+          onReset={onResetAPIKey}
+          onChange={onPasswordChange}
         />
       </InlineField>
     </div>}
