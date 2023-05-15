@@ -15,18 +15,17 @@
  * limitations under the License.
  */
 import React, { ChangeEvent } from 'react';
-import { InlineField, Input, Select } from '@grafana/ui';
+import { InlineField, SecretInput, Select, Input } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { MyDataSourceOptions } from '../types';
-import {AuthenticationType} from "../constant";
+import { MyDataSourceOptions, MySecureJsonData } from '../types';
+import { AuthenticationType } from "../constant";
 
 interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions> {}
 
 export function ConfigEditor(props: Props) {
-  const { options } = props;
+  const { options, onOptionsChange } = props;
 
   const onURLChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onOptionsChange, options } = props;
     const jsonData = {
       ...options.jsonData,
       URL: event.target.value,
@@ -35,46 +34,79 @@ export function ConfigEditor(props: Props) {
   };
 
   const onTypeChange = (v: any) => {
-    const { onOptionsChange, options } = props;
+    const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
     const jsonData = {
       ...options.jsonData,
       type: v.value,
-      username: v.value === AuthenticationType[1].value ? '' : options.jsonData.username,
-      password: v.value === AuthenticationType[1].value ? '' : options.jsonData.password,
+      username: '',
+      basicAuth: '',
     };
-    onOptionsChange({ ...options, jsonData });
+    
+    if (v.value === AuthenticationType[0].value) {
+      secureJsonData.password = secureJsonData.password;
+      jsonData.username = options.jsonData.username;
+      jsonData.basicAuth = options.jsonData.basicAuth;
+    }
+    const p = {
+      ...options,
+      jsonData,
+      secureJsonData,
+    };
+    onOptionsChange(p);
   };
 
   const onUserChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onOptionsChange, options } = props;
-    const basicAuth = btoa(encodeURI(`${event.target.value}:${options.jsonData.password}`));
+    const d = options.jsonData.basicAuth && options.jsonData.basicAuth.split('Basic ')[1] || '';
+    const password = d && atob(d).split(':')[1] || '';
+    const basicAuth = `Basic ${btoa(encodeURI(`${event.target.value}:${password}`))}`;
     const jsonData = {
       ...options.jsonData,
       username: event.target.value,
       basicAuth,
     };
 
-    onOptionsChange({ 
+    onOptionsChange({
       ...options,
       jsonData,
     });
   };
 
   const onPasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onOptionsChange, options } = props;
-    const basicAuth = btoa(encodeURI(`${options.jsonData.username}:${event.target.value}`));
+    const basicAuth = `Basic ${btoa(encodeURI(`${options.jsonData.username}:${event.target.value}`))}`;
     const jsonData = {
       ...options.jsonData,
-      password: event.target.value,
       basicAuth,
     };
-    onOptionsChange({ 
+
+    onOptionsChange({
       ...options,
       jsonData,
+      secureJsonData: {
+        password: event.target.value,
+      }
     });
   };
 
-  const { jsonData } = options;
+  const onResetPassword = () => {
+    onOptionsChange({
+      ...options,
+      jsonData: {
+        ...options.jsonData,
+        basicAuth: '',
+      },
+      secureJsonFields: {
+        ...options.secureJsonFields,
+        password: false,
+      },
+      secureJsonData: {
+        ...options.secureJsonData,
+        password: '',
+      },
+    });
+  };
+
+  const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
+  const { secureJsonFields, jsonData } = options;
 
   return (
     <div className="gf-form-group">
@@ -107,12 +139,14 @@ export function ConfigEditor(props: Props) {
         />
       </InlineField>
       <InlineField label="Password" labelWidth={18}>
-        <Input
-          onChange={onPasswordChange}
-          value={jsonData.password || ''}
-          placeholder="Please input password"
-          width={40}
+        <SecretInput
+          isConfigured={(secureJsonFields && secureJsonFields.password) as boolean}
           type="password"
+          value={secureJsonData.password || ''}
+          placeholder="secure password field (backend only)"
+          width={40}
+          onReset={onResetPassword}
+          onChange={onPasswordChange}
         />
       </InlineField>
     </div>}

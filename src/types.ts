@@ -31,19 +31,17 @@ export const DEFAULT_QUERY: Partial<MyQuery> = {};
  * These are options configured for each DataSource instance
  */
 export interface MyDataSourceOptions extends DataSourceJsonData {
-  path?: string;
   URL: string;
   username: string;
-  password: string;
-  basicAuth: string;
   type: string;
+  basicAuth: string;
 }
 
 /**
  * Value that is used in the backend, but never sent over HTTP to the frontend
  */
 export interface MySecureJsonData {
-  apiKey?: string;
+  password: string;
 }
 
 export type DurationTime = {
