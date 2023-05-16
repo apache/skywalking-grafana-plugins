@@ -144,16 +144,31 @@ SkyWalking Resources:
 
 6. publish package to Grafana Cloud
 
-Login to Grafana Cloud, the username is `apache-skywalking` and the password has been sent to `private@skwalking.apache.org`.
+  1. Build the plugin
 
-```bash
-> npm login
-> Username: apache-skywalking
-> Password:
-```
+  ```bash
+  > yarn install --pure-lockfile
+  > yarn build
+  ```
 
-Then publish the package to NPM.
+  2. [Sign in](https://grafana.com/auth/sign-in) to Grafana Cloud account,the username is `wusheng@apache.org` and the password has been sent to `private@skwalking.apache.org`.
 
-```
-> make publish
-```
+    1. In the left menu, under Org settings, click My Plugins.
+
+    2. Click Submit Update for the plugin you want to update.
+
+    3. Enter the information requested by the form.
+
+      OS & Architecture:
+
+        Select Single if your plugin archive contains binaries for multiple architectures.
+
+        Select Multiple if you’d like to submit separate plugin archives for each architecture. This can lead to faster downloads since users can select the specific architecture they want to install the plugin on.
+
+      URL: A URL that points to a ZIP archive of your packaged plugin.
+
+      Source Code URL: A URL that points to a public git repository or ZIP archive of your complete plugin source code.
+
+      MD5: The MD5 hash of the plugin specified by the URL.
+
+    4. Click Submit.
