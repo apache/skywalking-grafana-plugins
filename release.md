@@ -153,11 +153,11 @@ SkyWalking Resources:
 
   2. [Sign in](https://grafana.com/auth/sign-in) to Grafana Cloud account,the username is `wusheng@apache.org` and the password has been sent to `private@skwalking.apache.org`.
 
-    1. In the left menu, under Org settings, click My Plugins.
+    * In the left menu, under Org settings, click My Plugins.
 
-    2. Click Submit Update for the plugin you want to update.
+    * Click Submit Update for the plugin you want to update.
 
-    3. Enter the information requested by the form.
+    * Enter the information requested by the form.
 
       OS & Architecture:
 
@@ -171,4 +171,4 @@ SkyWalking Resources:
 
       MD5: The MD5 hash of the plugin specified by the URL.
 
-    4. Click Submit.
+    * Click Submit.
