@@ -40,7 +40,7 @@ release-src:
 	.
 
 	gpg $(GPG_UID_FLAG) --batch --yes --armor --detach-sig $(RELEASE_SRC).zip
-	shasum -a 512 $(RELEASE_SRC).zip > $(RELEASE_SRC).zip.sha1
+	shasum -a 1 $(RELEASE_SRC).zip > $(RELEASE_SRC).zip.sha1
 
 	mkdir -p release
 	mv $(RELEASE_SRC).zip release/$(RELEASE_SRC).zip
