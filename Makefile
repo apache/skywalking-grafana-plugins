@@ -27,7 +27,7 @@ endif
 
 .PHONY: release-src
 release-src:
-	tar -zcvf $(RELEASE_SRC).tgz \
+	tar -zcvf $(RELEASE_SRC).zip \
 	--exclude .git/ \
 	--exclude .idea/ \
 	--exclude .gitignore \
@@ -36,16 +36,18 @@ release-src:
 	--exclude lib \
 	--exclude node_modules \
 	--exclude release \
-	--exclude $(RELEASE_SRC).tgz \
+	--exclude $(RELEASE_SRC).zip \
 	.
 
-	gpg $(GPG_UID_FLAG) --batch --yes --armor --detach-sig $(RELEASE_SRC).tgz
-	shasum -a 512 $(RELEASE_SRC).tgz > $(RELEASE_SRC).tgz.sha512
+	gpg $(GPG_UID_FLAG) --batch --yes --armor --detach-sig $(RELEASE_SRC).zip
+	shasum -a 1 $(RELEASE_SRC).zip > $(RELEASE_SRC).zip.sha1
+	shasum -a 512 $(RELEASE_SRC).zip > $(RELEASE_SRC).zip.sha512
 
 	mkdir -p release
-	mv $(RELEASE_SRC).tgz release/$(RELEASE_SRC).tgz
-	mv $(RELEASE_SRC).tgz.asc release/$(RELEASE_SRC).tgz.asc
-	mv $(RELEASE_SRC).tgz.sha512 release/$(RELEASE_SRC).tgz.sha512
+	mv $(RELEASE_SRC).zip release/$(RELEASE_SRC).zip
+	mv $(RELEASE_SRC).zip.asc release/$(RELEASE_SRC).zip.asc
+	mv $(RELEASE_SRC).zip.sha1 release/$(RELEASE_SRC).zip.sha1
+	mv $(RELEASE_SRC).zip.sha512 release/$(RELEASE_SRC).zip.sha512
 
 .PHONY: install
 install:
