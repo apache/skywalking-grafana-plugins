@@ -50,5 +50,6 @@ e2e-results/
 
 # Editor
 .idea
+.DS_Store
 
 .eslintcache
