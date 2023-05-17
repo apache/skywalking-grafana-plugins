@@ -17,6 +17,7 @@ SHELL := /bin/bash -o pipefail
 
 VERSION ?= latest
 RELEASE_SRC = skywalking-grafana-plugins-${VERSION}-src
+RELEASE_DIST = skywalking-datasource-${VERSION}
 
 GPG_UID :=
 
@@ -27,7 +28,7 @@ endif
 
 .PHONY: release-src
 release-src:
-	tar -zcvf $(RELEASE_SRC).zip \
+	tar -zcvf $(RELEASE_SRC).tgz \
 	--exclude .git/ \
 	--exclude .idea/ \
 	--exclude .gitignore \
@@ -36,18 +37,30 @@ release-src:
 	--exclude lib \
 	--exclude node_modules \
 	--exclude release \
-	--exclude $(RELEASE_SRC).zip \
+	--exclude $(RELEASE_SRC).tgz \
 	.
 
-	gpg $(GPG_UID_FLAG) --batch --yes --armor --detach-sig $(RELEASE_SRC).zip
-	shasum -a 1 $(RELEASE_SRC).zip > $(RELEASE_SRC).zip.sha1
-	shasum -a 512 $(RELEASE_SRC).zip > $(RELEASE_SRC).zip.sha512
+	gpg $(GPG_UID_FLAG) --batch --yes --armor --detach-sig $(RELEASE_SRC).tgz
+	shasum -a 512 $(RELEASE_SRC).tgz > $(RELEASE_SRC).tgz.sha512
 
 	mkdir -p release
-	mv $(RELEASE_SRC).zip release/$(RELEASE_SRC).zip
-	mv $(RELEASE_SRC).zip.asc release/$(RELEASE_SRC).zip.asc
-	mv $(RELEASE_SRC).zip.sha1 release/$(RELEASE_SRC).zip.sha1
-	mv $(RELEASE_SRC).zip.sha512 release/$(RELEASE_SRC).zip.sha512
+	mv $(RELEASE_SRC).tgz release/$(RELEASE_SRC).tgz
+	mv $(RELEASE_SRC).tgz.asc release/$(RELEASE_SRC).tgz.asc
+	mv $(RELEASE_SRC).tgz.sha512 release/$(RELEASE_SRC).tgz.sha512
+
+.PHONY: release-dist
+release-dist:
+	mv dist/ skywalking-datasource
+	zip $(RELEASE_DIST).zip skywalking-datasource -r
+	rm -rf skywalking-datasource
+
+	gpg $(GPG_UID_FLAG) --batch --yes --armor --detach-sig $(RELEASE_DIST).zip
+	shasum -a 1 $(RELEASE_DIST).zip > $(RELEASE_DIST).zip.sha1
+
+	mkdir -p release-dist
+	mv $(RELEASE_DIST).zip release-dist/$(RELEASE_DIST).zip
+	mv $(RELEASE_DIST).zip.asc release-dist/$(RELEASE_DIST).zip.asc
+	mv $(RELEASE_DIST).zip.sha1 release-dist/$(RELEASE_DIST).zip.sha1
 
 .PHONY: install
 install:
