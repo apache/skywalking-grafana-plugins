@@ -149,6 +149,8 @@ SkyWalking Resources:
   ```bash
   > yarn install --pure-lockfile
   > yarn build
+  > export VERSION=x.y.z
+  > make release-dist
   ```
 
   2. [Sign in](https://grafana.com/auth/sign-in) to Grafana Cloud account,the username is `wusheng@apache.org` and the password has been sent to `private@skwalking.apache.org`.
