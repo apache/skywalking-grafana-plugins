@@ -57,11 +57,12 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     const { range } = options;
     const from = range!.from.valueOf();
     const to = range!.to.valueOf();
-    let utc = -(new Date().getTimezoneOffset() / 60);
-
-    if (options.timezone !== 'browser') {
-      utc = dayjs().tz(options.timezone).utcOffset() / 60;
-    }
+    const  v =  {
+      query: Fragments.utc,
+      variables: {},
+    };
+    const resp = await this.doRequest(v);
+    const utc = resp.data.getTimeInfo.timezone / 100;
     const dates = this.timeFormat([this.getLocalTime(utc, new Date(from)), this.getLocalTime(utc, new Date(to))]);
     const duration = {
       start: this.dateFormatStep(dates.start, dates.step),
