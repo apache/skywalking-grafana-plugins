@@ -16,9 +16,18 @@
     },
     "links": [],
     "screenshots": [
-      "img/config.png",
-      "img/query.png",
-      "img/view.png"
+      {
+        "name": "Config",
+        "path": "img/config.png"
+      },
+      {
+        "name": "Query",
+        "path": "img/query.png"
+      },
+      {
+        "name": "View",
+        "path": "img/view.png"
+      }
     ],
     "version": "%VERSION%",
     "updated": "%TODAY%"
