@@ -1,6 +1,6 @@
 # Skywalking Grafana Plugins
 
-<img src="http://skywalking.apache.org/assets/logo.svg" alt="Sky Walking logo" height="90px" align="right" />
+<img src="https://skywalking.apache.org/assets/logo.svg" alt="Sky Walking logo" height="90px" align="right" />
 
 SkyWalking Grafana Plugins provide extensions for [Apache SkyWalking](https://skywalking.apache.org/) to visualize telemetry data on Grafana.
 
@@ -35,7 +35,7 @@ The Settings tab of the data source is displayed.
 |Name|Description|
 |----|----|
 |Name|Sets the name you use to refer to the data source in panels and queries.|
-|URL|Sets the URL of the SkyWalking instance, such as http://skywalking.example.com/graphql.|
+|URL|Sets the URL of the SkyWalking instance, such as https://skywalking.example.com/graphql.|
 
 ## Add Service Topology Graph
 
@@ -60,7 +60,7 @@ The Settings tab of the data source is displayed.
 * [bilibili B站 视频](https://space.bilibili.com/390683219)
 
 # License
-[Apache 2.0 License.](LICENSE).
+[Apache 2.0 License.](https://github.com/apache/skywalking-grafana-plugins/blob/main/LICENSE).
 
 **NOTICE, Grafana itself is licensed in [GNU Affero General Public License v3.0](https://github.com/grafana/grafana/blob/v9.5.1/LICENSE).**
 
