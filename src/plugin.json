@@ -15,7 +15,11 @@
       "large": "img/logo.svg"
     },
     "links": [],
-    "screenshots": [],
+    "screenshots": [
+      "img/config.png",
+      "img/query.png",
+      "img/view.png"
+    ],
     "version": "%VERSION%",
     "updated": "%TODAY%"
   },
