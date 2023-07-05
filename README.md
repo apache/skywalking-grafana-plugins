@@ -13,7 +13,7 @@ The plugins are focusing on visualizing more telemetry data, e.g. Service Map To
 * Require Grafana 9.5.1+
 
 ```bash
-> grafana-cli plugins install skywalking-datasource
+> grafana-cli plugins install apache-skywalking-datasource
 ```
 
 ## Configure the data source
