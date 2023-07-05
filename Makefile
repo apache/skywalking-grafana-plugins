@@ -17,7 +17,7 @@ SHELL := /bin/bash -o pipefail
 
 VERSION ?= latest
 RELEASE_SRC = skywalking-grafana-plugins-${VERSION}-src
-RELEASE_DIST = skywalking-datasource-${VERSION}
+RELEASE_DIST = apache-skywalking-datasource-${VERSION}
 
 GPG_UID :=
 
@@ -50,9 +50,9 @@ release-src:
 
 .PHONY: release-dist
 release-dist:
-	mv dist/ skywalking-datasource
-	zip $(RELEASE_DIST).zip skywalking-datasource -r
-	rm -rf skywalking-datasource
+	mv dist/ apache-skywalking-datasource
+	zip $(RELEASE_DIST).zip apache-skywalking-datasource -r
+	rm -rf apache-skywalking-datasource
 
 	gpg $(GPG_UID_FLAG) --batch --yes --armor --detach-sig $(RELEASE_DIST).zip
 	shasum -a 1 $(RELEASE_DIST).zip > $(RELEASE_DIST).zip.sha1
