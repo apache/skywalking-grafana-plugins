@@ -45,7 +45,6 @@ jobs:
 
       - name: Sign plugin
         run: yarn sign
-        if: $\{{ env.GRAFANA_ACCESS_POLICY_TOKEN != '' }}
 
       - name: Package plugin
         run: |
