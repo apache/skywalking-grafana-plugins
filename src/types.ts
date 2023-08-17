@@ -32,8 +32,6 @@ export const DEFAULT_QUERY: Partial<MyQuery> = {};
  */
 export interface MyDataSourceOptions extends DataSourceJsonData {
   URL: string;
-  basicAuthUser: string;
-  basicAuth: boolean;
 }
 
 /**

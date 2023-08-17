@@ -34,31 +34,19 @@ export function ConfigEditor(props: Props) {
   };
 
   const onTypeChange = (v: any) => {
-    const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
-    const jsonData = options.jsonData;
-    
     if (v.value === AuthenticationType[0].value) {
-      jsonData.basicAuth = true;
+      options.basicAuth = true;
     } else {
-      jsonData.basicAuth = false;
+      options.basicAuth = false;
     }
-    const p = {
-      ...options,
-      jsonData,
-      secureJsonData,
-    };
-    onOptionsChange(p);
+    onOptionsChange({...options});
   };
 
   const onUserChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const jsonData = {
-      ...options.jsonData,
-      basicAuthUser: event.target.value,
-    };
 
     onOptionsChange({
       ...options,
-      jsonData,
+      basicAuthUser: event.target.value,
     });
   };
 
@@ -87,7 +75,7 @@ export function ConfigEditor(props: Props) {
   };
 
   const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
-  const { secureJsonFields, jsonData } = options;
+  const { secureJsonFields, jsonData, basicAuth, basicAuthUser } = options;
 
   return (
     <div className="gf-form-group">
@@ -102,19 +90,19 @@ export function ConfigEditor(props: Props) {
       <InlineField label="Authentication Type" labelWidth={18} >
         <Select
           options={AuthenticationType}
-          value={jsonData.basicAuth ? AuthenticationType[0].value : AuthenticationType[1].value}
+          value={basicAuth ? AuthenticationType[0].value : AuthenticationType[1].value}
           onChange={onTypeChange}
           width={40}
           placeholder="Choose an authentication type"
           menuPlacement="bottom"
         />
       </InlineField>
-      {jsonData.basicAuth &&
+      {basicAuth &&
       <div>
         <InlineField label="User Name" labelWidth={18}>
         <Input
           onChange={onUserChange}
-          value={jsonData.basicAuthUser || ''}
+          value={basicAuthUser || ''}
           placeholder="Please input username"
           width={40}
         />
