@@ -105,6 +105,9 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       t.variables.serviceIds = serviceObj.map((d: {layers: string[], id: string}) => d.id);
       // fetch topology data from api
       const res = await this.doRequest(t);
+      if (!res.data.topology) {
+        throw new Error('Layer or service is not found');
+      }
       const {nodes, calls} = this.setTopologyData({nodes: res.data.topology.nodes || [],  calls: res.data.topology.calls || []});
       const idsS = calls.filter((i: Call) => i.detectPoints.includes('SERVER')).map((b: Call) => b.id);
       const idsC = calls.filter((i: Call) => i.detectPoints.includes('CLIENT')).map((b: Call) => b.id);
