@@ -32,16 +32,15 @@ export const DEFAULT_QUERY: Partial<MyQuery> = {};
  */
 export interface MyDataSourceOptions extends DataSourceJsonData {
   URL: string;
-  username: string;
-  type: string;
-  basicAuth: string;
+  basicAuthUser: string;
+  basicAuth: boolean;
 }
 
 /**
  * Value that is used in the backend, but never sent over HTTP to the frontend
  */
 export interface MySecureJsonData {
-  password: string;
+  basicAuthPassword: string;
 }
 
 export type DurationTime = {
