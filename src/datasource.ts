@@ -221,19 +221,19 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     const mainStatField = { name: NodeGraphDataFrameFieldNames.mainStat, type: FieldType.number, values: new ArrayVector(), config: {}};
     const secondaryStatField = { name: NodeGraphDataFrameFieldNames.secondaryStat, type: FieldType.number, values: new ArrayVector(), config: {}};
     const detailsFields: any = [];
-    for (const [index, k] of Object.keys(metrics.data).entries()) {
-      const c = metrics.config.find((d: MetricData) => d.name === k) || {};
+    for (let i = 0; i < metrics.config.length; i++) {
+      const c = metrics.config[i];
       const config = {displayName: c.label, unit: c.unit};
-      if (index === 0) {
+      if (i === 0) {
         mainStatField.config = config;
-      } else if (index === 1) {
+      } else if (i === 1) {
         secondaryStatField.config = config;
       } else {
         detailsFields.push({
-          name: `${NodeGraphDataFrameFieldNames.detail}${k}`,
+          name: `${NodeGraphDataFrameFieldNames.detail}${c.name}`,
           type: FieldType.number,
           values: new ArrayVector(),
-          config: {displayName: `${c.label || k } ${c.unit || ''}`}
+          config: {displayName: `${c.label || c.name } ${c.unit || ''}`}
         });
       }
     }
@@ -267,20 +267,21 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     const mainStatField = { name: NodeGraphDataFrameFieldNames.mainStat, type: FieldType.number, values: new ArrayVector(), config: {}};
     const secondaryStatField = { name: NodeGraphDataFrameFieldNames.secondaryStat, type: FieldType.number, values: new ArrayVector(), config: {}};
     const detailsFields: any = [];
-    for (const [index, k] of Object.keys(metrics.data).entries()) {
-      const c = metrics.config.find((d: MetricData) => d.name === k) || {};
-      const config = {displayName: c.label, unit: c.unit};
-      if (index === 0) {
+
+    for (let i = 0; i < metrics.config.length; i++) {
+      const k = metrics.config[i];
+      const config = {displayName: k.label, unit: k.unit};
+      if (i === 0) {
         mainStatField.config = config;
       }
-      else if (index === 1) {
+      else if (i === 1) {
         secondaryStatField.config = config;
       } else {
         detailsFields.push({
-          name: `${NodeGraphDataFrameFieldNames.detail}${k}`,
+          name: `${NodeGraphDataFrameFieldNames.detail}${k.name}`,
           type: FieldType.number,
           values: new ArrayVector(),
-          config: {displayName: `${c.label || k } ${c.unit || ''}`}
+          config: {displayName: `${k.label || k.name } ${k.unit || ''}`}
         });
       }
     }
